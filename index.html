@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leangap 2026 — Meet Your Mentors</title>
+<style>
+  :root {
+    --bg: #f7f7fb;
+    --card: #ffffff;
+    --ink: #1c1c28;
+    --muted: #6b6b7b;
+    --accent: #5b5bd6;
+    --accent-soft: #ecebfd;
+    --border: #e6e6ef;
+    --radius: 16px;
+    --shadow: 0 1px 3px rgba(28,28,40,.06), 0 8px 24px rgba(28,28,40,.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+
+  header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%);
+    color: #fff;
+    padding: 64px 24px 88px;
+    text-align: center;
+  }
+  header h1 { font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.02em; }
+  header p {
+    max-width: 560px; margin: 14px auto 0; font-size: 1.05rem; opacity: .92;
+  }
+  .header-badge {
+    display: inline-block; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 5px 16px; font-size: .82rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; margin-bottom: 18px;
+  }
+
+  .controls {
+    max-width: 1140px; margin: -48px auto 0; padding: 0 24px; position: relative; z-index: 2;
+  }
+  .controls-inner {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .search-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  #search {
+    flex: 1; min-width: 220px; padding: 11px 16px; font-size: 1rem;
+    border: 1.5px solid var(--border); border-radius: 10px; outline: none;
+    transition: border-color .15s;
+  }
+  #search:focus { border-color: var(--accent); }
+  .count { font-size: .9rem; color: var(--muted); white-space: nowrap; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip {
+    border: 1.5px solid var(--border); background: #fff; color: var(--ink);
+    border-radius: 999px; padding: 6px 14px; font-size: .85rem; font-weight: 500;
+    cursor: pointer; transition: all .13s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  main { max-width: 1140px; margin: 0 auto; padding: 36px 24px 80px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;
+  }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden; display: flex; flex-direction: column;
+    transition: transform .16s ease, box-shadow .16s ease;
+    cursor: pointer;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 4px 8px rgba(28,28,40,.08), 0 16px 36px rgba(28,28,40,.12); }
+  .card-photo {
+    width: 100%; aspect-ratio: 9 / 5; object-fit: cover; object-position: center;
+    background: var(--accent-soft); display: block;
+  }
+  .card-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .card h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+  .role-badge {
+    font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+  }
+  .role-mentor { background: var(--accent-soft); color: var(--accent); }
+  .role-teen { background: #fff4e0; color: #b45309; }
+  .role-staff { background: #e0f4ea; color: #047857; }
+  .card .title { font-size: .92rem; color: var(--muted); font-weight: 500; }
+  .card .blurb { font-size: .92rem; color: #3c3c4c; }
+  .card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; }
+  .tag {
+    background: var(--accent-soft); color: var(--accent); font-size: .76rem; font-weight: 600;
+    padding: 4px 10px; border-radius: 999px;
+  }
+
+  .empty { text-align: center; color: var(--muted); padding: 60px 0; font-size: 1.05rem; display: none; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(20,20,30,.55); backdrop-filter: blur(3px);
+    display: none; align-items: center; justify-content: center; padding: 24px; z-index: 50;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 20px; max-width: 680px; width: 100%;
+    max-height: 88vh; overflow-y: auto; position: relative;
+  }
+  .modal-banner {
+    width: 100%; aspect-ratio: 9 / 5; object-fit: cover; display: block;
+    border-radius: 20px 20px 0 0; background: var(--accent-soft);
+  }
+  .modal-header { padding: 22px 28px 0; }
+  .modal-header h2 { font-size: 1.5rem; }
+  .modal-body { padding: 18px 28px 28px; }
+  .modal-body .bio { white-space: pre-line; font-size: .96rem; color: #33333f; margin-top: 8px; }
+  .modal-body .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .modal-body .ask { margin-top: 16px; background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; font-size: .92rem; }
+  .modal-body .ask strong { color: var(--accent); }
+  .modal-close {
+    position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%;
+    border: none; background: var(--bg); font-size: 1.1rem; cursor: pointer; color: var(--muted);
+  }
+  .modal-close:hover { background: var(--border); }
+
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 0 24px 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Leangap · Summer 2026</div>
+  <h1>Meet Your Mentors</h1>
+  <p>Founders, builders, designers, coaches, and the crew keeping everything running. Find the right person for whatever you're stuck on — their DMs are open.</p>
+</header>
+
+<div class="controls">
+  <div class="controls-inner">
+    <div class="search-row">
+      <input id="search" type="search" placeholder="Search by name, skill, or topic…" aria-label="Search mentors">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">No one matches that — try a different skill or clear the filters.</div>
+</main>
+
+<footer>Made with 💜 for the Leangap 2026 cohort · #👋mentor-introductions</footer>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <img class="modal-banner" id="m-photo" src="" alt="">
+    <div class="modal-header">
+      <h2 id="m-name"></h2>
+      <div class="title" id="m-title" style="color:var(--muted);font-weight:500;"></div>
+      <div id="m-role" style="margin-top:6px;"></div>
+    </div>
+    <div class="modal-body">
+      <div class="bio" id="m-bio"></div>
+      <div class="ask" id="m-ask"></div>
+      <div class="tags" id="m-tags"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MENTORS = [
+  {
+    name: "Kaeya",
+    photo: "mentors/kaeya.jpg",
+    role: "mentor",
+    title: "Founder, Disclosure Facts · 10th summer at Leangap",
+    location: "Washington, DC",
+    blurb: "Runs software that helps healthcare companies like Noom and Hims pay doctor influencers compliantly. Her superpower: getting you crystal clear on Why this? Why you? Why now?",
+    bio: "Kaeya's company, Disclosure Facts, builds specialized software for \"high-risk merchants\" — helping healthcare companies (like Noom and Hims) safely pay doctor influencers and patient ambassadors for endorsements.\n\nThis is her 10th summer at Leangap. What she loves most is helping students get to the heart of their startup: Why this? Why you? Why now? When you're clear on those three things, everything else — recruiting teammates, finding customers, raising money, pushing through the million no's — gets 10x less painful.\n\nIn her free time she hangs out with her sister (a med student at Georgetown) or attempts the violin.",
+    ask: "The heart of your startup — why this, why you, why now · finding customers · fundraising · pushing through dead ends",
+    tags: ["Startup Strategy", "Fundraising", "Customer Discovery", "Founder Mindset"]
+  },
+  {
+    name: "Oliy Barrett",
+    photo: "mentors/oliy.png",
+    role: "mentor",
+    title: "Co-Founder & CTO, Rythm",
+    location: "Digital nomad · currently Bali 🇮🇩",
+    blurb: "Built Top.gg and Rythm, the Discord music bot with 20,000,000+ active users. Started coding at 12; has shipped for iBUYPOWER and HYTE.",
+    bio: "Oliy started programming at 12 making games in Java, then freelanced as a full-stack developer for gaming companies. An early Discord beta user in 2015, he built some of the first Discord bots, and in 2016 created Top.gg — one of the biggest platforms for discovering Discord bots and communities, now serving millions of monthly users.\n\nHe's Co-Founder & CTO at Rythm, the Discord music bot turned social music platform with over 20 million active users, and has built software for major gaming brands like iBUYPOWER and HYTE.\n\nHe's a digital nomad who rarely stays in one country more than two months. Into gaming (Satisfactory, Flight Simulator, Cities: Skylines), electronics, hardware projects, and occasionally touching grass.\n\nFind him: LinkedIn — Oliy Barrett · Instagram — oliyy_",
+    ask: "Programming · product decisions · technical architecture · getting your first users · scaling something that's growing",
+    tags: ["Engineering", "Technical Architecture", "Scaling", "First Users", "Product"]
+  },
+  {
+    name: "MJ (MariaJose)",
+    photo: "mentors/mj.jpg",
+    role: "mentor",
+    title: "Licensed Psychotherapist · 6th year mentor",
+    location: "Mexico 🇲🇽",
+    blurb: "Trauma-certified therapist with a double Master's in Clinical Psychology & CBT. AuDHD herself — she gets it. Your go-to for burnout, anxiety, and surviving an intense month.",
+    bio: "MJ helps people navigate trauma, anxiety, neurodivergence, and burnout — the challenges that come with chasing big goals without completely self-destructing. She holds a double Master's in Clinical Psychology & CBT, is trauma-certified, and recently completed Harvard courses in Psychedelic Therapy, AI & Mental Health, and Youth Mental Health.\n\nShe's AuDHD (Autistic + ADHD) herself, so if you're neurodivergent, overwhelmed, masking all day, or running on caffeine and survival mode — she gets it. For 10+ years she's worked in therapy, crisis intervention, and mental health programs in Mexico, Uganda, and the US, including with founders and high performers.\n\nOutside psychology: traveling (41+ countries), Tolkien and fantasy, piano/flute/saxophone, yoga, Pokémon (Team Togepi 💛), her pets, and true crime documentaries.",
+    ask: "Anxiety, stress & burnout · neurodivergence support · pitch anxiety & confidence · relationships & teamwork · emotional regulation",
+    tags: ["Mental Health", "Burnout & Anxiety", "Neurodivergence", "Pitch Confidence", "Teamwork"]
+  },
+  {
+    name: "Luis Orihuela",
+    photo: "mentors/luis.webp",
+    role: "mentor",
+    title: "Frontend Developer · 7th year mentor",
+    location: "Mexico 🇲🇽",
+    blurb: "Has built web apps for BMW, Zumper, and delt.ai. Think of him as your tech co-founder — bring him your weird bugs and wild ideas.",
+    bio: "Luis's day job is bringing digital products to life. He's built web apps for big names like BMW, Zumper, and delt.ai, but his favorite part of the year is helping founders take a wild idea and turn it into a real, clickable reality.\n\nThink of him as your tech co-founder for the next few weeks: questions about building a webpage, developing an app, or troubleshooting a weird bug — he's your guy.\n\nQuick facts: obsessed with high-performance cars and hot hatches 🏎️, can nerd out over mechanical and micro-brand watches for hours ⌚, and a huge fan of video games 🎮.",
+    ask: "Building webpages & apps · frontend development · debugging weird bugs · turning ideas into clickable reality",
+    tags: ["Engineering", "Frontend", "Web Apps", "Debugging"]
+  },
+  {
+    name: "Eddy Varela",
+    photo: "mentors/eddy.jpeg",
+    role: "mentor",
+    title: "Product Builder · Co-Founder & CTO, ebitda-mx",
+    location: "Mexico",
+    blurb: "Turns messy financial data into things business owners actually use. Helped launch Openbank US with Santander. His zone: validating with real data and shipping MVPs fast.",
+    bio: "Eddy is Co-Founder & CTO at ebitda-mx, where he turns messy financial data into something business owners can actually use. He's built digital products from scratch at a venture studio, helped launch Openbank US with Santander, and founded a couple of his own startups. He's also mentored founders through programs like Future Founders and Firepit.\n\nHis zone is product building: figuring out the real problem you're trying to solve, validating it with actual data (not just vibes), and moving fast through POCs and MVPs until you've got a solution people will actually use. Stuck on \"okay, but how do we actually build this?\" — ask him.\n\nOff the clock: climbing, running, cycling, making videos, beginner Dungeon Master, Pokémon card collector, and losing at chess with great enthusiasm.",
+    ask: "Product building · validating with real data · POCs & MVPs · untangling technical roadblocks",
+    tags: ["Product", "Validation", "MVPs & POCs", "Engineering"]
+  },
+  {
+    name: "Vane Ibarra",
+    photo: "mentors/vane.png",
+    role: "mentor",
+    title: "Product Manager, Stori Card",
+    location: "Mexico City 🇲🇽",
+    blurb: "10+ years in product across fintech, retail, airlines, and loyalty — Stori, Banco Azteca, Aura (SF), Aeroméxico Rewards. ITAM grad with an MBA.",
+    bio: "Vane has over 10 years of experience driving product strategy, technical innovation, and operations across fintech, retail, airlines, and loyalty. She's currently a Product Manager at Stori Card, focused on core banking, backend product teams, and the end-to-end user and card lifecycle. Before that she led payment strategies and financial product launches at Banco Azteca, Aura Financial Services (San Francisco), and Aeroméxico Rewards. She holds a Bachelor's in Business Administration from ITAM and an MBA.\n\nHer passion: turning abstract ideas into real, scalable, successful products — and sharing the lessons (and missteps) from the tech industry.\n\nBalance side: carpentry classes 🪚, volleyball 🏐, calisthenics, and 3 books a month. Dog mom to a pug called Totoro 🐶.",
+    ask: "Structuring your ideas · prioritizing product value · product strategy · fintech & payments · lessons from the tech industry",
+    tags: ["Product", "Product Strategy", "Fintech", "Prioritization"]
+  },
+  {
+    name: "Kenza",
+    photo: "mentors/kenza.webp",
+    role: "mentor",
+    title: "Business Coach for Entrepreneurs & SMEs",
+    location: "Mexico 🇲🇽 · from Morocco 🇲🇦",
+    blurb: "10 years coaching business leaders across Africa, Europe, and the Americas. Ex-Google for Startups mentor. Speaks English, Spanish, French, Arabic & Moroccan.",
+    bio: "Kenza is a Business Coach for entrepreneurs and SMEs based in Mexico, with 10 years supporting business leaders and organizations across Africa, Europe, and the Americas. Born in Morocco, she earned a Master's in Finance and Business in France and started out in financial roles at big multinationals — before discovering her real purpose: helping entrepreneurs build projects with social and environmental impact.\n\nShe replicated the French social innovation agency makesense in Mexico, joined Google for Startups as a mentor for the Americas, then launched her own consulting company.\n\nExpertise: strategy 🎯, financial planning 📊, sales 🤑, design thinking 💡, social & environmental impact ♻️, community development 🤝, people & culture 🫂. Also passionate about psychology, wellbeing, spirituality, cooking, and travel. Want to practice English, Spanish, French, Arabic, or Moroccan? Happy to chat!",
+    ask: "Strategy · financial planning · sales · design thinking · social & environmental impact · community building",
+    tags: ["Business Strategy", "Finance", "Sales", "Design Thinking", "Social Impact"]
+  },
+  {
+    name: "Mafe Nava",
+    photo: "mentors/mafe.jpg",
+    role: "mentor",
+    title: "Startup & Innovation Program Manager",
+    location: "Mexico City 🇲🇽",
+    blurb: "Works at a UN-funded accelerator supporting startups tackling global challenges. Launched her own startup after graduating — she's been in your shoes.",
+    bio: "Mafe designs programs that help early-stage founders validate and grow businesses with social impact across Latin America. She currently works at a UN-funded accelerator supporting startups tackling global challenges.\n\nAfter graduating, she launched her own startup, gaining firsthand experience building from scratch. Since then she's supported young entrepreneurs across Mexico, guiding them from idea to execution — defining business models, finding product-market fit, building partnerships, and preparing for investment.\n\nOutside of work: reading with her book club 📚, hunting for the best matcha 🍵, traveling ✈️, and taking photos 📸.",
+    ask: "Startup strategy · business model design · growth & validation · social impact · pitching & storytelling",
+    tags: ["Startup Strategy", "Business Models", "Validation", "Social Impact", "Pitching"]
+  },
+  {
+    name: "Chelly (Rachel)",
+    photo: "mentors/chelly.png",
+    role: "mentor",
+    title: "Head of Visual Communications · mentor since 2020",
+    location: "Mexico",
+    blurb: "Founded an NPO at 19 creating wigs for kids with cancer, recognized by TEDx. Your go-to for branding, design, decks, and pitches people remember.",
+    bio: "Chelly is Leangap's Head of Visual Communications and has been a mentor since the very first online program in 2020.\n\nAt 19, she founded an NPO to encourage hair donation and create wigs for kids with cancer — a journey that taught her community-building and leadership, earning recognition from TEDx and Invisible Humans as a \"Hidden Leader.\"\n\nShe's endlessly curious about all things creative: mural painting, window illustrations, chalkboard lettering, hand lettering, screen printing. For her, design is more than making things look good — it's connecting with people, solving problems, and bringing ideas to life. She's a passionate storyteller who'd love to help you shape a pitch people will remember.\n\nBonus skills: video editing, motion graphics, lettering, and finding creative solutions when things get messy. Fun facts: she dances, and sings meh but with heart 👀.\n\nFind her: Instagram @chelly_93 · LinkedIn /in/chellito-lindo",
+    ask: "Branding · product design · social media · sales decks · visual storytelling · video editing & motion graphics",
+    tags: ["Design", "Branding", "Visual Storytelling", "Sales Decks", "Pitching"]
+  },
+  {
+    name: "Marianna",
+    photo: "mentors/marianna.png",
+    role: "mentor",
+    title: "Copywriter & Email Specialist · 3rd year",
+    location: "Galicia, Spain 🇪🇸 · from Greece 🇬🇷",
+    blurb: "Every Leangap email you've received? She wrote it. Led go-to-market at edtech startups like Platzi and HACK A BOSS. Getting people to click and say yes is literally her job.",
+    bio: "Fun fact: you already know Marianna's writing — every email you've received since you applied was hers. She's Leangap's in-house Copywriter & Email Specialist, and getting people to click, open, and say yes is literally her job.\n\nShe graduated cum laude in Journalism and since 2021 has been leading go-to-market at edtech startups like Platzi and HACK A BOSS. During the program she's Sayuri's second-in-command, and as a mentor she'll be asking: does your writing actually land with your customer? How can your customer journey improve?\n\nIf you're stuck getting your first users, writing a launch email nobody opens, or figuring out how people will ever find you — that's her world.\n\nOff the clock: rolling dice in DnD 🐉, cuddling her cat Capitan, The Apothecary Diaries, and romantasy. She's @mariannabiraki across the web.",
+    ask: "Email marketing & automation · SEO content strategy & audits · UX writing · launch copy · customer journeys",
+    tags: ["Copywriting", "Email Marketing", "SEO", "UX Writing", "Go-to-Market"]
+  },
+  {
+    name: "Mar (Mariana)",
+    photo: "mentors/mar.jpeg",
+    role: "mentor",
+    title: "Licensed Psychologist",
+    location: "Mexico City 🇲🇽",
+    blurb: "Specializes in helping young people understand how they learn, adapt, and cope. Has worked in Mexico, Spain, and the U.S. Here for the stressful moments.",
+    bio: "Mar is a licensed psychologist and health education advocate who works with children and adolescents, helping them understand how they learn, adapt, and cope with challenges — especially in school settings. She creates individualized support plans so young people feel more confident, capable, and understood.\n\nShe's worked in Mexico, Spain, and the U.S. with populations from teens to older adults, but especially loves working with young people: the energy, the curiosity, the big dreams, the random doubts, and figuring things out together.\n\nHaving a psychologist on the team is like having someone who helps you decode what your mind and body are trying to say when things get overwhelming.\n\nHobbies: classic novels 📚, exercising 🏊, dancing 💃, singing 🎶, and meditation 🧘.",
+    ask: "Stress & feeling overwhelmed · motivation, confidence & mindset · team dynamics & conflict · pitch nerves · or just someone to talk to",
+    tags: ["Mental Health", "Mindset & Motivation", "Team Dynamics", "Pitch Confidence"]
+  },
+  {
+    name: "Anders",
+    photo: "mentors/anders.png",
+    role: "teen",
+    title: "Founder, QPin · SF 2025 alum",
+    location: "Fremont, California",
+    blurb: "Built QPin from the firmware up through brand and go-to-market. Runs a fashion resale platform and hosts The Socratic Exchange, interviewing professors and Nobel laureates.",
+    bio: "Anders is a rising senior and was part of the Leangap SF 2025 cohort. Most of his time goes into QPin, the startup he founded at Leangap — developed from the firmware up through the brand and go-to-market strategy. He also runs a resale and creator platform for fashion (so he knows social media marketing), and hosts The Socratic Exchange, a weekly interview series with professors, Nobel laureates, and other interesting people.\n\nHe's gotten deep into product development, managing a team well, and figuring out how to actually get people to care about what you're building. Leangap taught him what being a founder actually looks like in real life — with plenty of lessons and mistakes to avoid, which he's excited to share.\n\nHe's here to pick apart your project or pitch, talk through the chaos of building, or just chat and play games. Instagram: @logungy",
+    ask: "Product development · team management · getting people to care about what you're building · social media marketing · the real founder experience",
+    tags: ["Product", "Go-to-Market", "Social Media", "Alum Experience"]
+  },
+  {
+    name: "Vivaan Dudani",
+    photo: "mentors/vivaan.png",
+    role: "teen",
+    title: "SF 2024 alum · Most Outstanding Company winner",
+    location: "Fremont, California",
+    blurb: "Nationally ranked parliamentary debater who won Most Outstanding Company in his cohort. Knows the full Leangap arc — including when your best idea needs a complete pivot.",
+    bio: "Vivaan is a rising senior from Fremont, California, and was part of the Leangap SF 2024 cohort — where his team won Most Outstanding Company. He competes in parliamentary debate (nationally ranked), works on startup projects with fellow Leangap alumni, and trains in dance.\n\nThrough all of it he's developed a strong interest in marketing, sales, public speaking, and communicating ideas in ways that genuinely connect with people.\n\nAs an alum he's been through the entire program: brainstorming, validating concepts, building pitches, receiving tough feedback, and learning that sometimes your best idea needs a complete pivot. He's ready to help you navigate it — brainstorm an idea, practice a pitch, talk through a challenge, or just get another student's perspective. 🕶️",
+    ask: "Marketing & sales · public speaking · pitch practice · brainstorming & validation · a student's perspective on the program",
+    tags: ["Marketing", "Sales", "Public Speaking", "Pitching", "Alum Experience"]
+  },
+  {
+    name: "Sayuri",
+    photo: "mentors/sayuri.jpeg",
+    role: "staff",
+    title: "Program Manager · with Leangap since 2018",
+    location: "San Francisco",
+    blurb: "Registered Dietitian, Master's in Food Business, and serial entrepreneur — clinical practice, bento catering, prenatal fitness, floral design. Your advocate for anything program-related.",
+    bio: "Sayuri ran operations for Leangap SF last year and is back as your Program Manager. Her Leangap journey started in 2018 as a mentor.\n\nShe's a Registered Dietitian with a Master's in Food Business and an entrepreneur at heart: she's launched an online clinical practice, a Japanese bento and catering business, a prenatal fitness platform, and a floral design venture. Recently she's been using AI to speed up her meal-plan and supplement-design workflows.\n\nAs PM, she's the engine making sure everything runs smoothly so you can focus 100% on building. Your advocate for dorm, facility, or teammate issues — and the main contact for parents (but NOT there to report your every move 🤐).\n\nOutside work: running, weightlifting, indoor cycling, yoga, beginner obstacle course racing, embroidery, reading, singing, and high-end gastronomy.",
+    ask: "Anything program-related · dorm & facilities issues · tricky teammate situations · entrepreneurship stories · food & nutrition",
+    tags: ["Program & Ops", "Student Advocacy", "Entrepreneurship"]
+  },
+  {
+    name: "Julio",
+    photo: "mentors/julio.png",
+    role: "staff",
+    title: "Leangap Staff · Economics & Finance student",
+    location: "Mexico",
+    blurb: "Back from the 2024 cohort to handle logistics, planning, visits, and safety. S-tier salsa dancer, LOTR superfan, and spends an hour a day exploring Google Maps for fun.",
+    bio: "Julio is part of the Leangap staff, back after the 2024 cohort. He's here for logistics 🫡, planning 🗺️, company visits 🏢, security 🔐, organization, transportation 🚙 — and chatting and chilling — to make the experience as comfortable, safe, and organized as possible.\n\nHe studies Economics and Finance and truly believes in its power to change the world. He colossally loves dancing salsa (S-tier), plus bachata and cumbia (A-tier). Gaming tastes: breathtaking narratives (God of War, Zelda BOTW, Hollow Knight) and nostalgic classics (COD, Minecraft, R6S). Favorite sagas: The Lord of the Rings 💍 and The Hobbit, by far.\n\nHe's learning German 🇩🇪 and Mandarin 🇨🇳, and spends about an hour a day exploring Google Maps — not for directions, but to see how geography connects with society, history, and the economy.",
+    ask: "Logistics · planning & organization · transportation · safety · or salsa lessons and Google Maps deep-dives",
+    tags: ["Program & Ops", "Logistics", "Planning"]
+  },
+  {
+    name: "María (Fisho)",
+    photo: "mentors/maria.png",
+    role: "staff",
+    title: "Leangap Staff · Student Success Manager at Crimson Education",
+    location: "Mexico",
+    blurb: "Supports students' academic journeys for a living. Journals since elementary school and dreams of Guillermo del Toro adapting her memoirs. Shy at first, then basically a podcast.",
+    bio: "María (Fisho) is joining for her first year as Leangap staff. She works as a Student Success Manager at Crimson Education, so being around students and supporting their journey is what she's genuinely passionate about.\n\nShe'll be supporting you with logistics, planning, visits, and safety 🙌🏾 — and she wants you to feel completely comfortable coming to her for whatever you need.\n\nAbout her: she's loved writing since she was a kid and has kept journals since elementary school 📓 (dream: Guillermo del Toro turns her memoirs into a series 😂). Music all day from wake-up to sleep 🎧. LOOOOVES movies — especially horror, plus LOTR and Batman 🍿. Reads fantasy novels, paints, and plays old-school N64 games 🎮. A bit shy at first, but once you start talking… she basically turns into a podcast 🎤.",
+    ask: "Logistics · planning · visits · safety · movie recommendations (especially horror)",
+    tags: ["Program & Ops", "Logistics", "Student Support"]
+  },
+  {
+    name: "Dani Cruz",
+    photo: "mentors/dani.jpg",
+    role: "staff",
+    title: "Leangap Staff · International Trade student",
+    location: "Mexico",
+    blurb: "Here to cheer you on, listen to your ideas, and make sure you have the best experience possible. Painter, knitter, hiker, swimmer, and relentlessly curious about how the world works.",
+    bio: "Dani is 21, in her 5th semester studying International Trade, and fascinated by how the world connects and works together 🌍. It's her first time in the program and she's here to support you in absolutely anything you need — to cheer you on, listen to your ideas, and make sure you have the most memorable experience possible 💖.\n\nShe has a huge creative side: painting, knitting, and pretty much any craft or DIY project 🎨🧶. She loves moving — sports, swimming, gym, yoga, and pilates 🧘‍♀️ — and is a nature lover at heart: hiking and camping are her favorite ways to recharge 🏕️.\n\nOn cozy days: reading, cooking new recipes, and movies. She's super curious, always researching scientific facts and how nature works — she hates being left with a doubt! 🔬💡",
+    ask: "Anything you need · a supportive ear · crafts & DIY · hiking spots · random deep questions about life",
+    tags: ["Program & Ops", "Student Support", "Community"]
+  }
+];
+
+const ROLE_LABELS = { mentor: "Mentor", teen: "Teen Mentor", staff: "Staff" };
+const ROLE_CLASSES = { mentor: "role-mentor", teen: "role-teen", staff: "role-staff" };
+
+// Build filter chips from all tags, ordered by frequency then name
+const tagCounts = {};
+MENTORS.forEach(m => m.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
+const allTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b));
+
+let activeTag = null;
+let query = "";
+
+const grid = document.getElementById("grid");
+const chipsEl = document.getElementById("chips");
+const countEl = document.getElementById("count");
+const emptyEl = document.getElementById("empty");
+
+function renderChips() {
+  chipsEl.innerHTML = "";
+  const all = document.createElement("button");
+  all.className = "chip" + (activeTag === null ? " active" : "");
+  all.textContent = "All";
+  all.onclick = () => { activeTag = null; render(); };
+  chipsEl.appendChild(all);
+  allTags.forEach(tag => {
+    const b = document.createElement("button");
+    b.className = "chip" + (activeTag === tag ? " active" : "");
+    b.textContent = tag;
+    b.onclick = () => { activeTag = activeTag === tag ? null : tag; render(); };
+    chipsEl.appendChild(b);
+  });
+}
+
+function matches(m) {
+  if (activeTag && !m.tags.includes(activeTag)) return false;
+  if (!query) return true;
+  const hay = [m.name, m.title, m.location, m.blurb, m.bio, m.ask, m.tags.join(" ")].join(" ").toLowerCase();
+  return query.toLowerCase().split(/\s+/).every(w => hay.includes(w));
+}
+
+function render() {
+  renderChips();
+  grid.innerHTML = "";
+  const visible = MENTORS.filter(matches);
+  visible.forEach(m => {
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML = `
+      <img class="card-photo" src="${m.photo}" alt="Photo of ${m.name}" loading="lazy">
+      <div class="card-body">
+        <div class="card-top">
+          <h2>${m.name}</h2>
+          <span class="role-badge ${ROLE_CLASSES[m.role]}">${ROLE_LABELS[m.role]}</span>
+        </div>
+        <div class="title">${m.title} · ${m.location}</div>
+        <p class="blurb">${m.blurb}</p>
+        <div class="tags">${m.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+      </div>`;
+    card.onclick = () => openModal(m);
+    grid.appendChild(card);
+  });
+  countEl.textContent = `${visible.length} of ${MENTORS.length} people`;
+  emptyEl.style.display = visible.length ? "none" : "block";
+}
+
+// Modal
+const backdrop = document.getElementById("modal-backdrop");
+function openModal(m) {
+  document.getElementById("m-photo").src = m.photo;
+  document.getElementById("m-photo").alt = "Photo of " + m.name;
+  document.getElementById("m-name").textContent = m.name;
+  document.getElementById("m-title").textContent = m.title + " · " + m.location;
+  document.getElementById("m-role").innerHTML =
+    `<span class="role-badge ${ROLE_CLASSES[m.role]}">${ROLE_LABELS[m.role]}</span>`;
+  document.getElementById("m-bio").textContent = m.bio;
+  document.getElementById("m-ask").innerHTML = `<strong>Ask me about:</strong> ${m.ask}`;
+  document.getElementById("m-tags").innerHTML = m.tags.map(t => `<span class="tag">${t}</span>`).join("");
+  backdrop.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  backdrop.classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.getElementById("modal-close").onclick = closeModal;
+backdrop.onclick = e => { if (e.target === backdrop) closeModal(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+document.getElementById("search").addEventListener("input", e => {
+  query = e.target.value.trim();
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
