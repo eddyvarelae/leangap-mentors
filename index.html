@@ -64,6 +64,28 @@
   }
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip.open { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  .subchips {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+    padding-top: 12px; border-top: 1px dashed var(--border);
+  }
+  .selected-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+  .selected-label { font-size: .85rem; color: var(--muted); font-weight: 600; }
+  .selected-tag {
+    display: inline-flex; align-items: center; gap: 7px; background: var(--accent); color: #fff;
+    border-radius: 999px; padding: 5px 9px 5px 14px; font-size: .82rem; font-weight: 600;
+  }
+  .selected-tag button {
+    border: none; background: rgba(255,255,255,.25); color: #fff; width: 18px; height: 18px;
+    border-radius: 50%; cursor: pointer; font-size: .68rem; line-height: 1; padding: 0;
+  }
+  .selected-tag button:hover { background: rgba(255,255,255,.45); }
+  .clear-all {
+    border: none; background: none; color: var(--muted); font-size: .82rem;
+    cursor: pointer; text-decoration: underline;
+  }
+  .clear-all:hover { color: var(--accent); }
 
   main { max-width: 1140px; margin: 0 auto; padding: 36px 24px 80px; }
   .grid {
@@ -146,6 +168,8 @@
       <span class="count" id="count"></span>
     </div>
     <div class="chips" id="chips"></div>
+    <div class="subchips" id="subchips" style="display:none"></div>
+    <div class="selected-row" id="selected-row" style="display:none"></div>
   </div>
 </div>
 
@@ -367,37 +391,101 @@ const MENTORS = [
 const ROLE_LABELS = { mentor: "Mentor", teen: "Teen Mentor", staff: "Staff" };
 const ROLE_CLASSES = { mentor: "role-mentor", teen: "role-teen", staff: "role-staff" };
 
-// Build filter chips from all tags, ordered by frequency then name
+// Tags are grouped into clusters; clicking a cluster reveals its tags,
+// selected tags are multi-select (a person matches if they have ANY of them).
 const tagCounts = {};
 MENTORS.forEach(m => m.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
-const allTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b));
 
-let activeTag = null;
+const CLUSTERS = [
+  { name: "Startup & Strategy", tags: ["Startup Strategy", "Business Strategy", "Business Models", "Product Strategy", "Entrepreneurship", "Founder Mindset", "Prioritization", "Fundraising", "Finance", "Fintech"] },
+  { name: "Product & Validation", tags: ["Product", "Validation", "MVPs & POCs", "Customer Discovery", "First Users", "Design Thinking"] },
+  { name: "Engineering", tags: ["Engineering", "Frontend", "Web Apps", "Technical Architecture", "Debugging", "Scaling"] },
+  { name: "Marketing & Sales", tags: ["Marketing", "Sales", "Go-to-Market", "Social Media", "Email Marketing", "SEO", "Copywriting", "UX Writing"] },
+  { name: "Pitching & Design", tags: ["Pitching", "Public Speaking", "Sales Decks", "Visual Storytelling", "Branding", "Design"] },
+  { name: "Wellbeing & Team", tags: ["Mental Health", "Burnout & Anxiety", "Neurodivergence", "Mindset & Motivation", "Pitch Confidence", "Teamwork"] },
+  { name: "Program & Community", tags: ["Program & Ops", "Logistics", "Planning", "Student Support", "Student Advocacy", "Community", "Social Impact", "Alum Experience"] },
+];
+
+// Safety net: any tag added to MENTORS later but not clustered still shows up
+const clusteredTags = new Set(CLUSTERS.flatMap(c => c.tags));
+const leftovers = Object.keys(tagCounts).filter(t => !clusteredTags.has(t)).sort();
+if (leftovers.length) CLUSTERS.push({ name: "More", tags: leftovers });
+CLUSTERS.forEach(c => c.tags = c.tags.filter(t => tagCounts[t]));
+
+let openCluster = null;
+let selectedTags = new Set();
 let query = "";
 
 const grid = document.getElementById("grid");
 const chipsEl = document.getElementById("chips");
+const subchipsEl = document.getElementById("subchips");
+const selectedRowEl = document.getElementById("selected-row");
 const countEl = document.getElementById("count");
 const emptyEl = document.getElementById("empty");
 
 function renderChips() {
   chipsEl.innerHTML = "";
   const all = document.createElement("button");
-  all.className = "chip" + (activeTag === null ? " active" : "");
+  all.className = "chip" + (selectedTags.size === 0 && openCluster === null ? " active" : "");
   all.textContent = "All";
-  all.onclick = () => { activeTag = null; render(); };
+  all.onclick = () => { selectedTags.clear(); openCluster = null; render(); };
   chipsEl.appendChild(all);
-  allTags.forEach(tag => {
+
+  CLUSTERS.forEach(c => {
+    const selCount = c.tags.filter(t => selectedTags.has(t)).length;
     const b = document.createElement("button");
-    b.className = "chip" + (activeTag === tag ? " active" : "");
-    b.textContent = tag;
-    b.onclick = () => { activeTag = activeTag === tag ? null : tag; render(); };
+    b.className = "chip" + (openCluster === c.name ? " open" : "") + (selCount ? " active" : "");
+    b.textContent = c.name + (selCount ? ` · ${selCount}` : "");
+    b.onclick = () => { openCluster = openCluster === c.name ? null : c.name; render(); };
     chipsEl.appendChild(b);
   });
+
+  // Tags of the open cluster
+  const cluster = CLUSTERS.find(c => c.name === openCluster);
+  subchipsEl.style.display = cluster ? "flex" : "none";
+  subchipsEl.innerHTML = "";
+  if (cluster) {
+    cluster.tags.forEach(tag => {
+      const b = document.createElement("button");
+      b.className = "chip" + (selectedTags.has(tag) ? " active" : "");
+      b.textContent = tag;
+      b.onclick = () => {
+        selectedTags.has(tag) ? selectedTags.delete(tag) : selectedTags.add(tag);
+        render();
+      };
+      subchipsEl.appendChild(b);
+    });
+  }
+
+  // Selected-filters list
+  selectedRowEl.style.display = selectedTags.size ? "flex" : "none";
+  selectedRowEl.innerHTML = "";
+  if (selectedTags.size) {
+    const label = document.createElement("span");
+    label.className = "selected-label";
+    label.textContent = "Filtering by:";
+    selectedRowEl.appendChild(label);
+    selectedTags.forEach(tag => {
+      const pill = document.createElement("span");
+      pill.className = "selected-tag";
+      pill.textContent = tag + " ";
+      const x = document.createElement("button");
+      x.textContent = "✕";
+      x.setAttribute("aria-label", "Remove " + tag);
+      x.onclick = () => { selectedTags.delete(tag); render(); };
+      pill.appendChild(x);
+      selectedRowEl.appendChild(pill);
+    });
+    const clear = document.createElement("button");
+    clear.className = "clear-all";
+    clear.textContent = "Clear all";
+    clear.onclick = () => { selectedTags.clear(); render(); };
+    selectedRowEl.appendChild(clear);
+  }
 }
 
 function matches(m) {
-  if (activeTag && !m.tags.includes(activeTag)) return false;
+  if (selectedTags.size && !m.tags.some(t => selectedTags.has(t))) return false;
   if (!query) return true;
   const hay = [m.name, m.title, m.location, m.blurb, m.bio, m.ask, m.tags.join(" ")].join(" ").toLowerCase();
   return query.toLowerCase().split(/\s+/).every(w => hay.includes(w));
