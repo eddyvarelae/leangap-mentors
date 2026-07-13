@@ -31,6 +31,10 @@
     text-align: center;
   }
   header h1 { font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.02em; }
+  .header-logo {
+    width: 190px; max-width: 55vw; display: block; margin: 0 auto 20px;
+    filter: brightness(0) invert(1); /* wordmark ships dark; render white on the gradient */
+  }
   header p {
     max-width: 560px; margin: 14px auto 0; font-size: 1.05rem; opacity: .92;
   }
@@ -189,7 +193,8 @@
 <body>
 
 <header>
-  <div class="header-badge">Leangap · Summer 2026</div>
+  <img class="header-logo" src="leangap-logo.svg" alt="Leangap">
+  <div class="header-badge">Summer 2026</div>
   <h1>Meet Your Mentors</h1>
   <p>Founders, builders, designers, coaches, and the crew keeping everything running. Find the right person for whatever you're stuck on — their DMs are open.</p>
 </header>
