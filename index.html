@@ -152,6 +152,9 @@
   .mini-photo.ring-mentor { border-bottom-color: var(--accent); }
   .mini-photo.ring-teen { border-bottom-color: #b45309; }
   .mini-photo.ring-staff { border-bottom-color: #047857; }
+  @media (max-width: 640px) {
+    .grid.compact { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  }
 
   /* Modal */
   .modal-backdrop {
