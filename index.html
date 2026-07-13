@@ -55,6 +55,13 @@
   }
   #search:focus { border-color: var(--accent); }
   .count { font-size: .9rem; color: var(--muted); white-space: nowrap; }
+  .view-toggle {
+    border: 1.5px solid var(--border); background: #fff; color: var(--ink);
+    border-radius: 10px; padding: 10px 16px; font-size: .9rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all .13s;
+  }
+  .view-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .view-toggle.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   .chip {
@@ -70,6 +77,8 @@
     display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
     padding-top: 12px; border-top: 1px dashed var(--border);
   }
+  .subchips-label { width: 100%; font-size: .82rem; font-weight: 600; color: var(--muted); }
+  .subchips-label strong { color: var(--accent); }
   .selected-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
   .selected-label { font-size: .85rem; color: var(--muted); font-weight: 600; }
   .selected-tag {
@@ -123,6 +132,18 @@
 
   .empty { text-align: center; color: var(--muted); padding: 60px 0; font-size: 1.05rem; display: none; }
 
+  /* Compact "faces" view: just photo + name, fits everyone in one frame */
+  .grid.compact { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+  .card.mini { padding: 16px 10px 14px; align-items: center; text-align: center; gap: 10px; }
+  .mini-photo {
+    width: 84px; height: 84px; border-radius: 50%; object-fit: cover; object-position: center;
+    background: var(--accent-soft); border: 3px solid var(--border); display: block;
+  }
+  .mini-photo.ring-mentor { border-color: var(--accent); }
+  .mini-photo.ring-teen { border-color: #b45309; }
+  .mini-photo.ring-staff { border-color: #047857; }
+  .mini-name { font-weight: 700; font-size: .92rem; line-height: 1.25; }
+
   /* Modal */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(20,20,30,.55); backdrop-filter: blur(3px);
@@ -165,6 +186,7 @@
   <div class="controls-inner">
     <div class="search-row">
       <input id="search" type="search" placeholder="Search by name, skill, or topic…" aria-label="Search mentors">
+      <button class="view-toggle" id="view-toggle" aria-pressed="false">👥 Faces view</button>
       <span class="count" id="count"></span>
     </div>
     <div class="chips" id="chips"></div>
@@ -415,6 +437,7 @@ CLUSTERS.forEach(c => c.tags = c.tags.filter(t => tagCounts[t]));
 let openCluster = null;
 let selectedTags = new Set();
 let query = "";
+let compact = false;
 
 const grid = document.getElementById("grid");
 const chipsEl = document.getElementById("chips");
@@ -445,6 +468,10 @@ function renderChips() {
   subchipsEl.style.display = cluster ? "flex" : "none";
   subchipsEl.innerHTML = "";
   if (cluster) {
+    const label = document.createElement("div");
+    label.className = "subchips-label";
+    label.innerHTML = `Topics in <strong>${cluster.name}</strong> — pick one or more:`;
+    subchipsEl.appendChild(label);
     cluster.tags.forEach(tag => {
       const b = document.createElement("button");
       b.className = "chip" + (selectedTags.has(tag) ? " active" : "");
@@ -493,22 +520,30 @@ function matches(m) {
 
 function render() {
   renderChips();
+  grid.className = "grid" + (compact ? " compact" : "");
   grid.innerHTML = "";
   const visible = MENTORS.filter(matches);
   visible.forEach(m => {
     const card = document.createElement("article");
-    card.className = "card";
-    card.innerHTML = `
-      <img class="card-photo" src="${m.photo}" alt="Photo of ${m.name}" loading="lazy">
-      <div class="card-body">
-        <div class="card-top">
-          <h2>${m.name}</h2>
-          <span class="role-badge ${ROLE_CLASSES[m.role]}">${ROLE_LABELS[m.role]}</span>
-        </div>
-        <div class="title">${m.title} · ${m.location}</div>
-        <p class="blurb">${m.blurb}</p>
-        <div class="tags">${m.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
-      </div>`;
+    if (compact) {
+      card.className = "card mini";
+      card.innerHTML = `
+        <img class="mini-photo ring-${m.role}" src="${m.photo}" alt="Photo of ${m.name}" loading="lazy">
+        <div class="mini-name">${m.name}</div>`;
+    } else {
+      card.className = "card";
+      card.innerHTML = `
+        <img class="card-photo" src="${m.photo}" alt="Photo of ${m.name}" loading="lazy">
+        <div class="card-body">
+          <div class="card-top">
+            <h2>${m.name}</h2>
+            <span class="role-badge ${ROLE_CLASSES[m.role]}">${ROLE_LABELS[m.role]}</span>
+          </div>
+          <div class="title">${m.title} · ${m.location}</div>
+          <p class="blurb">${m.blurb}</p>
+          <div class="tags">${m.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+        </div>`;
+    }
     card.onclick = () => openModal(m);
     grid.appendChild(card);
   });
@@ -543,6 +578,15 @@ document.getElementById("search").addEventListener("input", e => {
   query = e.target.value.trim();
   render();
 });
+
+const viewToggle = document.getElementById("view-toggle");
+viewToggle.onclick = () => {
+  compact = !compact;
+  viewToggle.classList.toggle("active", compact);
+  viewToggle.setAttribute("aria-pressed", String(compact));
+  viewToggle.textContent = compact ? "🗂 Card view" : "👥 Faces view";
+  render();
+};
 
 render();
 </script>
