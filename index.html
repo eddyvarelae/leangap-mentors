@@ -132,17 +132,18 @@
 
   .empty { text-align: center; color: var(--muted); padding: 60px 0; font-size: 1.05rem; display: none; }
 
-  /* Compact "faces" view: just photo + name, fits everyone in one frame */
-  .grid.compact { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
-  .card.mini { padding: 16px 10px 14px; align-items: center; text-align: center; gap: 10px; }
+  /* Compact "faces" view: the full banner (name is baked into the image),
+     shown small so everyone fits in one frame. Bottom bar is role-colored. */
+  .grid.compact { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .card.mini { padding: 0; }
   .mini-photo {
-    width: 84px; height: 84px; border-radius: 50%; object-fit: cover; object-position: center;
-    background: var(--accent-soft); border: 3px solid var(--border); display: block;
+    width: 100%; aspect-ratio: 9 / 5; object-fit: cover; object-position: center;
+    background: var(--accent-soft); display: block;
+    border-bottom: 4px solid var(--border);
   }
-  .mini-photo.ring-mentor { border-color: var(--accent); }
-  .mini-photo.ring-teen { border-color: #b45309; }
-  .mini-photo.ring-staff { border-color: #047857; }
-  .mini-name { font-weight: 700; font-size: .92rem; line-height: 1.25; }
+  .mini-photo.ring-mentor { border-bottom-color: var(--accent); }
+  .mini-photo.ring-teen { border-bottom-color: #b45309; }
+  .mini-photo.ring-staff { border-bottom-color: #047857; }
 
   /* Modal */
   .modal-backdrop {
@@ -528,8 +529,7 @@ function render() {
     if (compact) {
       card.className = "card mini";
       card.innerHTML = `
-        <img class="mini-photo ring-${m.role}" src="${m.photo}" alt="Photo of ${m.name}" loading="lazy">
-        <div class="mini-name">${m.name}</div>`;
+        <img class="mini-photo ring-${m.role}" src="${m.photo}" alt="Photo of ${m.name}" loading="lazy">`;
     } else {
       card.className = "card";
       card.innerHTML = `
