@@ -540,9 +540,21 @@ function renderChips() {
   }
 }
 
+// Selected tags, plus the whole open cluster while none of its tags are
+// picked yet — so opening a category filters immediately.
+function activeTagSet() {
+  const set = new Set(selectedTags);
+  const cluster = CLUSTERS.find(c => c.name === openCluster);
+  if (cluster && !cluster.tags.some(t => selectedTags.has(t))) {
+    cluster.tags.forEach(t => set.add(t));
+  }
+  return set;
+}
+
 function matches(m) {
   if (compact) return true; // roster mode always shows everyone
-  if (selectedTags.size && !m.tags.some(t => selectedTags.has(t))) return false;
+  const active = activeTagSet();
+  if (active.size && !m.tags.some(t => active.has(t))) return false;
   if (!query) return true;
   const hay = [m.name, m.title, m.location, m.blurb, m.bio, m.ask, m.tags.join(" ")].join(" ").toLowerCase();
   return query.toLowerCase().split(/\s+/).every(w => hay.includes(w));
