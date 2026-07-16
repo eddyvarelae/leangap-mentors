@@ -94,7 +94,17 @@
   }
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .chip.open { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .chips-hint { width: 100%; font-size: .76rem; font-weight: 600; color: var(--muted); }
+  .more-cats { width: 100%; }
+  .more-cats summary {
+    cursor: pointer; list-style: none; display: inline-block; font-size: .8rem;
+    font-weight: 700; color: var(--accent); padding: 2px 0;
+    -webkit-user-select: none; user-select: none;
+  }
+  .more-cats summary::-webkit-details-marker { display: none; }
+  .more-cats summary::after { content: " ▾"; }
+  .more-cats[open] summary::after { content: " ▴"; }
+  .more-cats .chips-inner { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 
   .subchips {
     display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
@@ -466,7 +476,8 @@ const leftovers = Object.keys(tagCounts).filter(t => !clusteredTags.has(t)).sort
 if (leftovers.length) CLUSTERS.push({ name: "More", tags: leftovers });
 CLUSTERS.forEach(c => c.tags = c.tags.filter(t => tagCounts[t]));
 
-let openCluster = null;
+let selectedClusters = new Set();
+let moreCatsOpen = false;
 let selectedTags = new Set();
 let query = "";
 let compact = false;
@@ -480,26 +491,63 @@ const emptyEl = document.getElementById("empty");
 
 function renderChips() {
   chipsEl.innerHTML = "";
+
+  const hint = document.createElement("div");
+  hint.className = "chips-hint";
+  hint.textContent = "Categories — combine as many as you like:";
+  chipsEl.appendChild(hint);
+
   const all = document.createElement("button");
-  all.className = "chip" + (selectedTags.size === 0 && openCluster === null ? " active" : "");
+  all.className = "chip" + (selectedClusters.size === 0 && selectedTags.size === 0 ? " active" : "");
   all.textContent = "All";
-  all.onclick = () => { selectedTags.clear(); openCluster = null; render(); };
+  all.onclick = () => { selectedClusters.clear(); selectedTags.clear(); render(); };
   chipsEl.appendChild(all);
 
-  CLUSTERS.forEach(c => {
+  const mkClusterChip = c => {
+    const on = selectedClusters.has(c.name);
     const selCount = c.tags.filter(t => selectedTags.has(t)).length;
     const b = document.createElement("button");
-    b.className = "chip" + (openCluster === c.name ? " open" : "") + (selCount ? " active" : "");
-    b.textContent = c.name + (selCount ? ` · ${selCount}` : "");
-    b.onclick = () => { openCluster = openCluster === c.name ? null : c.name; render(); };
-    chipsEl.appendChild(b);
-  });
+    b.className = "chip" + (on ? " active" : "");
+    b.textContent = (on ? "✓ " : "+ ") + c.name + (selCount ? ` · ${selCount}` : "");
+    b.onclick = () => {
+      if (on) {
+        selectedClusters.delete(c.name);
+        c.tags.forEach(t => selectedTags.delete(t));
+      } else {
+        selectedClusters.add(c.name);
+      }
+      render();
+    };
+    return b;
+  };
 
-  // Tags of the open cluster
-  const cluster = CLUSTERS.find(c => c.name === openCluster);
-  subchipsEl.style.display = cluster ? "flex" : "none";
+  const selected = CLUSTERS.filter(c => selectedClusters.has(c.name));
+  const unselected = CLUSTERS.filter(c => !selectedClusters.has(c.name));
+  selected.forEach(c => chipsEl.appendChild(mkClusterChip(c)));
+
+  // On phones, fold the unselected categories away once something is picked
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
+  if (isMobile && selected.length && unselected.length) {
+    const det = document.createElement("details");
+    det.className = "more-cats";
+    if (moreCatsOpen) det.open = true;
+    det.addEventListener("toggle", () => { moreCatsOpen = det.open; });
+    const sum = document.createElement("summary");
+    sum.textContent = `+ Add another category (${unselected.length})`;
+    det.appendChild(sum);
+    const inner = document.createElement("div");
+    inner.className = "chips-inner";
+    unselected.forEach(c => inner.appendChild(mkClusterChip(c)));
+    det.appendChild(inner);
+    chipsEl.appendChild(det);
+  } else {
+    unselected.forEach(c => chipsEl.appendChild(mkClusterChip(c)));
+  }
+
+  // Topic chips for every selected category
+  subchipsEl.style.display = selected.length ? "flex" : "none";
   subchipsEl.innerHTML = "";
-  if (cluster) {
+  selected.forEach(cluster => {
     const label = document.createElement("div");
     label.className = "subchips-label";
     label.innerHTML = `Topics in <strong>${cluster.name}</strong> — pick one or more:`;
@@ -514,7 +562,7 @@ function renderChips() {
       };
       subchipsEl.appendChild(b);
     });
-  }
+  });
 
   // Selected-filters list
   selectedRowEl.style.display = selectedTags.size ? "flex" : "none";
@@ -543,14 +591,15 @@ function renderChips() {
   }
 }
 
-// Selected tags, plus the whole open cluster while none of its tags are
-// picked yet — so opening a category filters immediately.
+// Each selected category contributes its picked tags, or all of its tags
+// while none are picked — so selecting a category filters immediately.
 function activeTagSet() {
-  const set = new Set(selectedTags);
-  const cluster = CLUSTERS.find(c => c.name === openCluster);
-  if (cluster && !cluster.tags.some(t => selectedTags.has(t))) {
-    cluster.tags.forEach(t => set.add(t));
-  }
+  const set = new Set();
+  CLUSTERS.forEach(c => {
+    if (!selectedClusters.has(c.name)) return;
+    const picked = c.tags.filter(t => selectedTags.has(t));
+    (picked.length ? picked : c.tags).forEach(t => set.add(t));
+  });
   return set;
 }
 
@@ -632,6 +681,11 @@ viewToggle.onclick = () => {
   document.getElementById("controls-inner").classList.toggle("roster", compact);
   render();
 };
+
+// Re-render when crossing the mobile breakpoint so the category
+// accordion appears/disappears accordingly
+const mobileMq = window.matchMedia("(max-width: 640px)");
+if (mobileMq.addEventListener) mobileMq.addEventListener("change", () => render());
 
 render();
 </script>
