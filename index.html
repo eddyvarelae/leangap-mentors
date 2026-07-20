@@ -711,7 +711,7 @@ function render() {
   renderChips();
   grid.className = "grid" + (compact ? " compact" : "");
   grid.innerHTML = "";
-  const visible = MENTORS.filter(matches);
+  const visible = MENTORS.filter(matches).sort((a, b) => a.name.localeCompare(b.name));
   visible.forEach(m => {
     const card = document.createElement("article");
     if (compact) {
@@ -889,14 +889,24 @@ function renderFormTags() {
 
 // "," and ">" are the tag string's own separators, so strip them from names
 const cleanName = s => s.replace(/[>,]/g, " ").replace(/\s+/g, " ").trim();
-document.getElementById("f-add-tag").onclick = () => {
+function addTag() {
   const cat = cleanName(catSel.value === NEW_OPT ? catNew.value : catSel.value);
   const sub = cleanName(subSel.value === NEW_OPT ? subNew.value : subSel.value);
-  if (!cat || !sub) return;
+  if (!cat) { catNew.focus(); return; }
+  if (!sub) { subNew.focus(); return; }
   if (!formTags.some(t => t.cat === cat && t.sub === sub)) formTags.push({ cat, sub });
   catNew.value = ""; subNew.value = "";
   renderFormTags();
-};
+}
+document.getElementById("f-add-tag").onclick = addTag;
+
+// Enter in a text field must never fire the implicit form submission —
+// people lose half-typed tags that way; in the builder it adds the tag.
+editForm.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.target.tagName !== "INPUT") return;
+  e.preventDefault();
+  if (e.target === catNew || e.target === subNew) addTag();
+});
 
 document.getElementById("m-edit-btn").onclick = () => {
   const m = currentMentor;
@@ -924,6 +934,8 @@ document.getElementById("edit-cancel").onclick = () => {
 
 editForm.onsubmit = async e => {
   e.preventDefault();
+  // sweep in a typed-but-not-yet-added tag pair
+  if (catNew.value.trim() || subNew.value.trim()) addTag();
   const btn = document.getElementById("edit-submit");
   btn.disabled = true;
   editStatus.textContent = "Sending…";
