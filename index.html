@@ -520,10 +520,7 @@ const ROLE_CLASSES = { mentor: "role-mentor", teen: "role-teen", staff: "role-st
 
 // Tags are grouped into clusters; clicking a cluster reveals its tags,
 // selected tags are multi-select (a person matches if they have ANY of them).
-const tagCounts = {};
-MENTORS.forEach(m => m.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
-
-const CLUSTERS = [
+const CLUSTER_DEFS = [
   { name: "Startup & Strategy", tags: ["Startup Strategy", "Business Strategy", "Business Models", "Product Strategy", "Entrepreneurship", "Founder Mindset", "Prioritization", "Fundraising", "Finance", "Fintech"] },
   { name: "Product & Validation", tags: ["Product", "Validation", "MVPs & POCs", "Customer Discovery", "First Users", "Design Thinking"] },
   { name: "Engineering", tags: ["Engineering", "Frontend", "Web Apps", "Technical Architecture", "Debugging", "Scaling"] },
@@ -533,11 +530,18 @@ const CLUSTERS = [
   { name: "Program & Community", tags: ["Program & Ops", "Logistics", "Planning", "Student Support", "Student Advocacy", "Community", "Social Impact", "Alum Experience"] },
 ];
 
-// Safety net: any tag added to MENTORS later but not clustered still shows up
-const clusteredTags = new Set(CLUSTERS.flatMap(c => c.tags));
-const leftovers = Object.keys(tagCounts).filter(t => !clusteredTags.has(t)).sort();
-if (leftovers.length) CLUSTERS.push({ name: "More", tags: leftovers });
-CLUSTERS.forEach(c => c.tags = c.tags.filter(t => tagCounts[t]));
+// Rebuilt whenever mentor data changes (e.g. approved Airtable overrides):
+// any tag not in CLUSTER_DEFS still shows up under "More".
+let CLUSTERS = [];
+function rebuildClusters() {
+  const tagCounts = {};
+  MENTORS.forEach(m => m.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1));
+  const clusteredTags = new Set(CLUSTER_DEFS.flatMap(c => c.tags));
+  const leftovers = Object.keys(tagCounts).filter(t => !clusteredTags.has(t)).sort();
+  CLUSTERS = CLUSTER_DEFS.map(c => ({ name: c.name, tags: c.tags.filter(t => tagCounts[t]) }));
+  if (leftovers.length) CLUSTERS.push({ name: "More", tags: leftovers });
+}
+rebuildClusters();
 
 let selectedClusters = new Set();
 let moreCatsOpen = false;
@@ -671,7 +675,7 @@ function matches(m) {
   const active = activeTagSet();
   if (active.size && !m.tags.some(t => active.has(t))) return false;
   if (!query) return true;
-  const hay = [m.name, m.title, m.location, m.blurb, m.bio, m.ask, m.tags.join(" ")].join(" ").toLowerCase();
+  const hay = [m.name, m.title, m.location || "", m.blurb, m.bio, m.ask, m.tags.join(" ")].join(" ").toLowerCase();
   return query.toLowerCase().split(/\s+/).every(w => hay.includes(w));
 }
 
@@ -695,7 +699,7 @@ function render() {
             <h2>${m.name}</h2>
             <span class="role-badge ${ROLE_CLASSES[m.role]}">${ROLE_LABELS[m.role]}</span>
           </div>
-          <div class="title">${m.title} · ${m.location}</div>
+          <div class="title">${m.title}${m.location ? " · " + m.location : ""}</div>
           <p class="blurb">${m.blurb}</p>
           <div class="tags">${m.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
         </div>`;
@@ -716,6 +720,50 @@ const AIRTABLE = {
   table: "Change Requests"
 };
 
+// Rows with the "Approved" checkbox ticked override the hardcoded card,
+// keyed by the Mentor column; when several are approved, the newest wins.
+async function applyApprovedOverrides() {
+  if (AIRTABLE.token.startsWith("PASTE_")) return;
+  try {
+    const base = `https://api.airtable.com/v0/${AIRTABLE.baseId}/${encodeURIComponent(AIRTABLE.table)}`;
+    const records = [];
+    let offset = "";
+    do {
+      const res = await fetch(`${base}?filterByFormula=${encodeURIComponent("{Approved}")}${offset ? "&offset=" + offset : ""}`,
+        { headers: { "Authorization": `Bearer ${AIRTABLE.token}` } });
+      if (!res.ok) throw new Error(`Airtable ${res.status}`);
+      const data = await res.json();
+      records.push(...(data.records || []));
+      offset = data.offset;
+    } while (offset);
+
+    const latest = {};
+    records.forEach(r => {
+      const key = r.fields["Mentor"];
+      if (!key) return;
+      if (!latest[key] || r.createdTime > latest[key].createdTime) latest[key] = r;
+    });
+
+    let changed = false;
+    MENTORS.forEach(m => {
+      const r = latest[m.name];
+      if (!r) return;
+      const f = r.fields;
+      if (f["Name"]) m.name = f["Name"];
+      if (f["Title"]) m.title = f["Title"];
+      m.location = f["Location"] || ""; // the form always submits it, so absent means cleared
+      if (f["Blurb"]) m.blurb = f["Blurb"];
+      if (f["Bio"]) m.bio = f["Bio"];
+      if (f["Ask"]) m.ask = f["Ask"];
+      if (f["Tags"]) m.tags = f["Tags"].split(",").map(t => t.trim()).filter(Boolean);
+      changed = true;
+    });
+    if (changed) { rebuildClusters(); render(); }
+  } catch (err) {
+    console.warn("Skipping Airtable overrides:", err);
+  }
+}
+
 // Modal
 const backdrop = document.getElementById("modal-backdrop");
 let currentMentor = null;
@@ -727,7 +775,7 @@ function openModal(m) {
   document.getElementById("m-photo").src = m.photo;
   document.getElementById("m-photo").alt = "Photo of " + m.name;
   document.getElementById("m-name").textContent = m.name;
-  document.getElementById("m-title").textContent = m.title + " · " + m.location;
+  document.getElementById("m-title").textContent = m.title + (m.location ? " · " + m.location : "");
   document.getElementById("m-role").innerHTML =
     `<span class="role-badge ${ROLE_CLASSES[m.role]}">${ROLE_LABELS[m.role]}</span>`;
   document.getElementById("m-bio").textContent = m.bio;
@@ -822,6 +870,7 @@ const mobileMq = window.matchMedia("(max-width: 640px)");
 if (mobileMq.addEventListener) mobileMq.addEventListener("change", () => render());
 
 render();
+applyApprovedOverrides();
 </script>
 </body>
 </html>
