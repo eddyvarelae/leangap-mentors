@@ -235,6 +235,19 @@
   }
   .edit-cancel:hover { border-color: var(--accent); color: var(--accent); }
   .edit-status { font-size: .88rem; font-weight: 600; }
+  .tag-builder { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .tag-builder select, .tag-builder input {
+    flex: 1; min-width: 150px; width: auto; padding: 8px 12px; font-size: .9rem;
+    font-family: inherit; border: 1.5px solid var(--border); border-radius: 10px;
+    outline: none; background: #fff;
+  }
+  .tag-builder select:focus, .tag-builder input:focus { border-color: var(--accent); }
+  .tag-add {
+    border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent);
+    border-radius: 10px; padding: 8px 16px; font-size: .85rem; font-weight: 700; cursor: pointer;
+  }
+  .tag-add:hover { background: var(--accent); color: #fff; }
+  .f-tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 
   footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 0 24px 40px; }
 </style>
@@ -302,8 +315,15 @@
       <textarea id="f-bio" rows="10"></textarea>
       <label for="f-ask">Ask me about</label>
       <textarea id="f-ask" rows="2"></textarea>
-      <label for="f-tags">Tags (comma-separated)</label>
-      <input id="f-tags">
+      <label for="f-cat">Tags — pick a category and a topic, or propose new ones</label>
+      <div class="tag-builder">
+        <select id="f-cat"></select>
+        <input id="f-cat-new" placeholder="New category name" style="display:none">
+        <select id="f-sub"></select>
+        <input id="f-sub-new" placeholder="New topic name" style="display:none">
+        <button type="button" class="tag-add" id="f-add-tag">Add</button>
+      </div>
+      <div class="f-tag-list" id="f-tag-list"></div>
       <div class="edit-actions">
         <button type="submit" class="edit-submit" id="edit-submit">Submit request</button>
         <button type="button" class="edit-cancel" id="edit-cancel">Cancel</button>
@@ -543,6 +563,14 @@ function rebuildClusters() {
 }
 rebuildClusters();
 
+// Approved rows can propose brand-new categories/topics ("Category > Topic"
+// entries in the tags column); they become real filter chips here.
+function registerTag(cat, sub) {
+  let def = CLUSTER_DEFS.find(c => c.name.toLowerCase() === cat.toLowerCase());
+  if (!def) { def = { name: cat, tags: [] }; CLUSTER_DEFS.push(def); }
+  if (!def.tags.includes(sub)) def.tags.push(sub);
+}
+
 let selectedClusters = new Set();
 let moreCatsOpen = false;
 let selectedTags = new Set();
@@ -756,7 +784,18 @@ async function applyApprovedOverrides() {
       if (f["blurb"]) m.blurb = f["blurb"];
       if (f["bio"]) m.bio = f["bio"];
       if (f["ask"]) m.ask = f["ask"];
-      if (f["tags"]) m.tags = f["tags"].split(",").map(t => t.trim()).filter(Boolean);
+      if (f["tags"]) {
+        const subs = [];
+        f["tags"].split(",").map(s => s.trim()).filter(Boolean).forEach(entry => {
+          const gt = entry.indexOf(">");
+          const cat = gt > -1 ? entry.slice(0, gt).trim() : "";
+          const sub = (gt > -1 ? entry.slice(gt + 1) : entry).trim();
+          if (!sub) return;
+          subs.push(sub);
+          if (cat) registerTag(cat, sub);
+        });
+        if (subs.length) m.tags = subs;
+      }
       changed = true;
     });
     if (changed) { rebuildClusters(); render(); }
@@ -797,6 +836,68 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal()
 const editForm = document.getElementById("edit-form");
 const editStatus = document.getElementById("edit-status");
 
+// Structured tag picker: tags are "Category > Topic" pairs, and both
+// dropdowns end with a "New…" option so mentors can propose new ones.
+const NEW_OPT = "__new__";
+let formTags = [];
+const catSel = document.getElementById("f-cat");
+const subSel = document.getElementById("f-sub");
+const catNew = document.getElementById("f-cat-new");
+const subNew = document.getElementById("f-sub-new");
+
+function tagCategory(tag) {
+  const def = CLUSTER_DEFS.find(c => c.tags.includes(tag));
+  return def ? def.name : "More";
+}
+
+catSel.onchange = () => {
+  catNew.style.display = catSel.value === NEW_OPT ? "" : "none";
+  subSel.innerHTML = "";
+  const def = CLUSTER_DEFS.find(c => c.name === catSel.value);
+  (def ? def.tags : []).forEach(t => subSel.appendChild(new Option(t, t)));
+  subSel.appendChild(new Option("➕ New topic…", NEW_OPT));
+  if (!def) subSel.value = NEW_OPT; // a new category starts with a new topic
+  subSel.onchange();
+};
+subSel.onchange = () => {
+  subNew.style.display = subSel.value === NEW_OPT ? "" : "none";
+};
+
+function fillCatSelect() {
+  catSel.innerHTML = "";
+  CLUSTER_DEFS.forEach(c => catSel.appendChild(new Option(c.name, c.name)));
+  catSel.appendChild(new Option("➕ New category…", NEW_OPT));
+  catSel.onchange();
+}
+
+function renderFormTags() {
+  const list = document.getElementById("f-tag-list");
+  list.innerHTML = "";
+  formTags.forEach((t, i) => {
+    const pill = document.createElement("span");
+    pill.className = "selected-tag";
+    pill.textContent = `${t.cat} > ${t.sub} `;
+    const x = document.createElement("button");
+    x.type = "button";
+    x.textContent = "✕";
+    x.setAttribute("aria-label", `Remove ${t.sub}`);
+    x.onclick = () => { formTags.splice(i, 1); renderFormTags(); };
+    pill.appendChild(x);
+    list.appendChild(pill);
+  });
+}
+
+// "," and ">" are the tag string's own separators, so strip them from names
+const cleanName = s => s.replace(/[>,]/g, " ").replace(/\s+/g, " ").trim();
+document.getElementById("f-add-tag").onclick = () => {
+  const cat = cleanName(catSel.value === NEW_OPT ? catNew.value : catSel.value);
+  const sub = cleanName(subSel.value === NEW_OPT ? subNew.value : subSel.value);
+  if (!cat || !sub) return;
+  if (!formTags.some(t => t.cat === cat && t.sub === sub)) formTags.push({ cat, sub });
+  catNew.value = ""; subNew.value = "";
+  renderFormTags();
+};
+
 document.getElementById("m-edit-btn").onclick = () => {
   const m = currentMentor;
   document.getElementById("f-submitter").value = "";
@@ -806,7 +907,9 @@ document.getElementById("m-edit-btn").onclick = () => {
   document.getElementById("f-blurb").value = m.blurb;
   document.getElementById("f-bio").value = m.bio;
   document.getElementById("f-ask").value = m.ask;
-  document.getElementById("f-tags").value = m.tags.join(", ");
+  formTags = m.tags.map(t => ({ cat: tagCategory(t), sub: t }));
+  fillCatSelect();
+  renderFormTags();
   editStatus.textContent = "";
   document.getElementById("edit-submit").disabled = false;
   document.getElementById("modal-body").style.display = "none";
@@ -837,7 +940,7 @@ editForm.onsubmit = async e => {
         "blurb": document.getElementById("f-blurb").value.trim(),
         "bio": document.getElementById("f-bio").value.trim(),
         "ask": document.getElementById("f-ask").value.trim(),
-        "tags": document.getElementById("f-tags").value.trim()
+        "tags": formTags.map(t => `${t.cat} > ${t.sub}`).join(", ")
       } }] })
     });
     if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
