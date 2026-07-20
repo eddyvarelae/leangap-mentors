@@ -711,9 +711,10 @@ function render() {
   renderChips();
   grid.className = "grid" + (compact ? " compact" : "");
   grid.innerHTML = "";
-  // Mentors first, then teen mentors and staff — alphabetical within each
+  // Mentors first (Eddy closing the group), then teens and staff — alphabetical within each
+  const grp = m => (m.role === "mentor" ? 0 : 2) + (m.name === "Eddy Varela" ? 1 : 0);
   const visible = MENTORS.filter(matches).sort((a, b) =>
-    (a.role === "mentor" ? 0 : 1) - (b.role === "mentor" ? 0 : 1) || a.name.localeCompare(b.name));
+    grp(a) - grp(b) || a.name.localeCompare(b.name));
   visible.forEach(m => {
     const card = document.createElement("article");
     if (compact) {
