@@ -217,11 +217,12 @@
   .edit-btn:hover { background: var(--accent); color: #fff; }
   .edit-form { display: none; padding: 4px 28px 28px; }
   .edit-form label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin: 14px 0 4px; }
-  .edit-form input, .edit-form textarea {
+  .edit-form input, .edit-form textarea, .edit-form select {
     width: 100%; padding: 8px 12px; font-size: .9rem; font-family: inherit; line-height: 1.5;
     border: 1.5px solid var(--border); border-radius: 10px; outline: none; transition: border-color .15s;
+    background: #fff;
   }
-  .edit-form input:focus, .edit-form textarea:focus { border-color: var(--accent); }
+  .edit-form input:focus, .edit-form textarea:focus, .edit-form select:focus { border-color: var(--accent); }
   .edit-form textarea { resize: vertical; }
   .edit-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; align-items: center; }
   .edit-submit {
@@ -307,6 +308,12 @@
       <input id="f-name">
       <label for="f-title">Title</label>
       <input id="f-title">
+      <label for="f-role">Role</label>
+      <select id="f-role">
+        <option value="mentor">Mentor</option>
+        <option value="teen">Teen Mentor</option>
+        <option value="staff">Staff</option>
+      </select>
       <label for="f-location">Location</label>
       <input id="f-location">
       <label for="f-blurb">Card blurb (short intro on the card)</label>
@@ -783,6 +790,10 @@ async function applyApprovedOverrides() {
       const f = r.fields;
       if (f["name"]) m.name = f["name"];
       if (f["title"]) m.title = f["title"];
+      // accept either the internal key ("teen") or the label ("Teen Mentor")
+      const rv = (f["role"] || "").trim().toLowerCase();
+      const roleKey = Object.keys(ROLE_LABELS).find(k => k === rv || ROLE_LABELS[k].toLowerCase() === rv);
+      if (roleKey) m.role = roleKey;
       m.location = f["location"] || ""; // the form always submits it, so absent means cleared
       if (f["blurb"]) m.blurb = f["blurb"];
       if (f["bio"]) m.bio = f["bio"];
@@ -916,6 +927,7 @@ document.getElementById("m-edit-btn").onclick = () => {
   document.getElementById("f-submitter").value = "";
   document.getElementById("f-name").value = m.name;
   document.getElementById("f-title").value = m.title;
+  document.getElementById("f-role").value = m.role;
   document.getElementById("f-location").value = m.location || "";
   document.getElementById("f-blurb").value = m.blurb;
   document.getElementById("f-bio").value = m.bio;
@@ -951,6 +963,7 @@ editForm.onsubmit = async e => {
         "mentor": currentMentor.name,
         "name": document.getElementById("f-name").value.trim(),
         "title": document.getElementById("f-title").value.trim(),
+        "role": document.getElementById("f-role").value,
         "location": document.getElementById("f-location").value.trim(),
         "blurb": document.getElementById("f-blurb").value.trim(),
         "bio": document.getElementById("f-bio").value.trim(),
