@@ -208,6 +208,34 @@
   }
   .modal-close:hover { background: var(--border); }
 
+  /* Change-request form (only reachable via ?edit links) */
+  .edit-btn {
+    margin-top: 18px; width: 100%; border: 1.5px dashed var(--accent); background: var(--accent-soft);
+    color: var(--accent); border-radius: 10px; padding: 10px 14px; font-size: .88rem; font-weight: 700;
+    cursor: pointer; transition: all .13s;
+  }
+  .edit-btn:hover { background: var(--accent); color: #fff; }
+  .edit-form { display: none; padding: 4px 28px 28px; }
+  .edit-form label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin: 14px 0 4px; }
+  .edit-form input, .edit-form textarea {
+    width: 100%; padding: 8px 12px; font-size: .9rem; font-family: inherit; line-height: 1.5;
+    border: 1.5px solid var(--border); border-radius: 10px; outline: none; transition: border-color .15s;
+  }
+  .edit-form input:focus, .edit-form textarea:focus { border-color: var(--accent); }
+  .edit-form textarea { resize: vertical; }
+  .edit-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; align-items: center; }
+  .edit-submit {
+    border: none; background: var(--accent); color: #fff; border-radius: 10px;
+    padding: 10px 18px; font-size: .9rem; font-weight: 700; cursor: pointer;
+  }
+  .edit-submit:disabled { opacity: .6; cursor: default; }
+  .edit-cancel {
+    border: 1.5px solid var(--border); background: #fff; color: var(--muted); border-radius: 10px;
+    padding: 9px 16px; font-size: .9rem; font-weight: 600; cursor: pointer;
+  }
+  .edit-cancel:hover { border-color: var(--accent); color: var(--accent); }
+  .edit-status { font-size: .88rem; font-weight: 600; }
+
   footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 0 24px 40px; }
 </style>
 </head>
@@ -253,11 +281,35 @@
       <div class="title" id="m-title" style="color:var(--muted);font-weight:500;"></div>
       <div id="m-role" style="margin-top:6px;"></div>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" id="modal-body">
       <div class="bio" id="m-bio"></div>
       <div class="ask" id="m-ask"></div>
       <div class="tags" id="m-tags"></div>
+      <button class="edit-btn" id="m-edit-btn" style="display:none">✏️ Request a change to this card</button>
     </div>
+    <form class="edit-form" id="edit-form">
+      <label for="f-submitter">Your name *</label>
+      <input id="f-submitter" required placeholder="Who's requesting this change?">
+      <label for="f-name">Name</label>
+      <input id="f-name">
+      <label for="f-title">Title</label>
+      <input id="f-title">
+      <label for="f-location">Location</label>
+      <input id="f-location">
+      <label for="f-blurb">Card blurb (short intro on the card)</label>
+      <textarea id="f-blurb" rows="3"></textarea>
+      <label for="f-bio">Full bio</label>
+      <textarea id="f-bio" rows="10"></textarea>
+      <label for="f-ask">Ask me about</label>
+      <textarea id="f-ask" rows="2"></textarea>
+      <label for="f-tags">Tags (comma-separated)</label>
+      <input id="f-tags">
+      <div class="edit-actions">
+        <button type="submit" class="edit-submit" id="edit-submit">Submit request</button>
+        <button type="button" class="edit-cancel" id="edit-cancel">Cancel</button>
+        <span class="edit-status" id="edit-status"></span>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -655,9 +707,23 @@ function render() {
   emptyEl.style.display = visible.length ? "none" : "block";
 }
 
+// Change requests land in Airtable. The token is public by design (base is
+// scoped to write-only on this one table); share ?edit links only with mentors.
+const EDIT_MODE = new URLSearchParams(location.search).has("edit");
+const AIRTABLE = {
+  token: "PASTE_AIRTABLE_TOKEN",
+  baseId: "PASTE_BASE_ID",
+  table: "Change Requests"
+};
+
 // Modal
 const backdrop = document.getElementById("modal-backdrop");
+let currentMentor = null;
 function openModal(m) {
+  currentMentor = m;
+  document.getElementById("modal-body").style.display = "";
+  document.getElementById("edit-form").style.display = "none";
+  document.getElementById("m-edit-btn").style.display = EDIT_MODE ? "" : "none";
   document.getElementById("m-photo").src = m.photo;
   document.getElementById("m-photo").alt = "Photo of " + m.name;
   document.getElementById("m-name").textContent = m.name;
@@ -677,6 +743,63 @@ function closeModal() {
 document.getElementById("modal-close").onclick = closeModal;
 backdrop.onclick = e => { if (e.target === backdrop) closeModal(); };
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// Change-request form: prefilled with the card's current data
+const editForm = document.getElementById("edit-form");
+const editStatus = document.getElementById("edit-status");
+
+document.getElementById("m-edit-btn").onclick = () => {
+  const m = currentMentor;
+  document.getElementById("f-submitter").value = "";
+  document.getElementById("f-name").value = m.name;
+  document.getElementById("f-title").value = m.title;
+  document.getElementById("f-location").value = m.location || "";
+  document.getElementById("f-blurb").value = m.blurb;
+  document.getElementById("f-bio").value = m.bio;
+  document.getElementById("f-ask").value = m.ask;
+  document.getElementById("f-tags").value = m.tags.join(", ");
+  editStatus.textContent = "";
+  document.getElementById("edit-submit").disabled = false;
+  document.getElementById("modal-body").style.display = "none";
+  editForm.style.display = "block";
+  document.getElementById("f-submitter").focus();
+};
+
+document.getElementById("edit-cancel").onclick = () => {
+  editForm.style.display = "none";
+  document.getElementById("modal-body").style.display = "";
+};
+
+editForm.onsubmit = async e => {
+  e.preventDefault();
+  const btn = document.getElementById("edit-submit");
+  btn.disabled = true;
+  editStatus.textContent = "Sending…";
+  try {
+    const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE.baseId}/${encodeURIComponent(AIRTABLE.table)}`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${AIRTABLE.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ records: [{ fields: {
+        "Submitted by": document.getElementById("f-submitter").value.trim(),
+        "Mentor": currentMentor.name,
+        "Name": document.getElementById("f-name").value.trim(),
+        "Title": document.getElementById("f-title").value.trim(),
+        "Location": document.getElementById("f-location").value.trim(),
+        "Blurb": document.getElementById("f-blurb").value.trim(),
+        "Bio": document.getElementById("f-bio").value.trim(),
+        "Ask": document.getElementById("f-ask").value.trim(),
+        "Tags": document.getElementById("f-tags").value.trim()
+      } }] })
+    });
+    if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
+    editStatus.textContent = "✅ Sent — thanks!";
+    setTimeout(closeModal, 1200);
+  } catch (err) {
+    console.error(err);
+    editStatus.textContent = "⚠️ Couldn't send — please try again.";
+    btn.disabled = false;
+  }
+};
 
 document.getElementById("search").addEventListener("input", e => {
   query = e.target.value.trim();
