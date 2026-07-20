@@ -738,10 +738,11 @@ async function applyApprovedOverrides() {
     } while (offset);
 
     const latest = {};
+    const stamp = r => r.fields["Last Modified"] || r.createdTime;
     records.forEach(r => {
       const key = r.fields["mentor"];
       if (!key) return;
-      if (!latest[key] || r.createdTime > latest[key].createdTime) latest[key] = r;
+      if (!latest[key] || stamp(r) > stamp(latest[key])) latest[key] = r;
     });
 
     let changed = false;
