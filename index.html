@@ -717,7 +717,7 @@ const EDIT_MODE = new URLSearchParams(location.search).has("edit");
 const AIRTABLE = {
   token: "PASTE_AIRTABLE_TOKEN",
   baseId: "PASTE_BASE_ID",
-  table: "Change Requests"
+  table: "Table 1"
 };
 
 // Rows with the "Approved" checkbox ticked override the hardcoded card,
@@ -729,7 +729,7 @@ async function applyApprovedOverrides() {
     const records = [];
     let offset = "";
     do {
-      const res = await fetch(`${base}?filterByFormula=${encodeURIComponent("{Approved}")}${offset ? "&offset=" + offset : ""}`,
+      const res = await fetch(`${base}?filterByFormula=${encodeURIComponent("{approved}")}${offset ? "&offset=" + offset : ""}`,
         { headers: { "Authorization": `Bearer ${AIRTABLE.token}` } });
       if (!res.ok) throw new Error(`Airtable ${res.status}`);
       const data = await res.json();
@@ -739,7 +739,7 @@ async function applyApprovedOverrides() {
 
     const latest = {};
     records.forEach(r => {
-      const key = r.fields["Mentor"];
+      const key = r.fields["mentor"];
       if (!key) return;
       if (!latest[key] || r.createdTime > latest[key].createdTime) latest[key] = r;
     });
@@ -749,13 +749,13 @@ async function applyApprovedOverrides() {
       const r = latest[m.name];
       if (!r) return;
       const f = r.fields;
-      if (f["Name"]) m.name = f["Name"];
-      if (f["Title"]) m.title = f["Title"];
-      m.location = f["Location"] || ""; // the form always submits it, so absent means cleared
-      if (f["Blurb"]) m.blurb = f["Blurb"];
-      if (f["Bio"]) m.bio = f["Bio"];
-      if (f["Ask"]) m.ask = f["Ask"];
-      if (f["Tags"]) m.tags = f["Tags"].split(",").map(t => t.trim()).filter(Boolean);
+      if (f["name"]) m.name = f["name"];
+      if (f["title"]) m.title = f["title"];
+      m.location = f["location"] || ""; // the form always submits it, so absent means cleared
+      if (f["blurb"]) m.blurb = f["blurb"];
+      if (f["bio"]) m.bio = f["bio"];
+      if (f["ask"]) m.ask = f["ask"];
+      if (f["tags"]) m.tags = f["tags"].split(",").map(t => t.trim()).filter(Boolean);
       changed = true;
     });
     if (changed) { rebuildClusters(); render(); }
@@ -828,15 +828,15 @@ editForm.onsubmit = async e => {
       method: "POST",
       headers: { "Authorization": `Bearer ${AIRTABLE.token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ records: [{ fields: {
-        "Submitted by": document.getElementById("f-submitter").value.trim(),
-        "Mentor": currentMentor.name,
-        "Name": document.getElementById("f-name").value.trim(),
-        "Title": document.getElementById("f-title").value.trim(),
-        "Location": document.getElementById("f-location").value.trim(),
-        "Blurb": document.getElementById("f-blurb").value.trim(),
-        "Bio": document.getElementById("f-bio").value.trim(),
-        "Ask": document.getElementById("f-ask").value.trim(),
-        "Tags": document.getElementById("f-tags").value.trim()
+        "submittedBy": document.getElementById("f-submitter").value.trim(),
+        "mentor": currentMentor.name,
+        "name": document.getElementById("f-name").value.trim(),
+        "title": document.getElementById("f-title").value.trim(),
+        "location": document.getElementById("f-location").value.trim(),
+        "blurb": document.getElementById("f-blurb").value.trim(),
+        "bio": document.getElementById("f-bio").value.trim(),
+        "ask": document.getElementById("f-ask").value.trim(),
+        "tags": document.getElementById("f-tags").value.trim()
       } }] })
     });
     if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
