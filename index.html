@@ -358,7 +358,7 @@ const MENTORS = [
     tags: ["Startup Strategy", "Fundraising", "Customer Discovery", "Founder Mindset"]
   },
   {
-    name: "Oliy Barrett",
+    name: "Oliy",
     photo: "mentors/oliy.png",
     role: "mentor",
     title: "Co-Founder & CTO, Rythm",
@@ -380,7 +380,7 @@ const MENTORS = [
     tags: ["Mental Health", "Burnout & Anxiety", "Neurodivergence", "Pitch Confidence", "Teamwork"]
   },
   {
-    name: "Luis Orihuela",
+    name: "Luis",
     photo: "mentors/luis.webp",
     role: "mentor",
     title: "Frontend Developer · 7th year mentor",
@@ -391,7 +391,7 @@ const MENTORS = [
     tags: ["Engineering", "Frontend", "Web Apps", "Debugging"]
   },
   {
-    name: "Eddy Varela",
+    name: "Eddy",
     photo: "mentors/eddy.jpeg",
     role: "mentor",
     title: "Product Builder · Co-Founder & CTO, ebitda-mx",
@@ -402,7 +402,7 @@ const MENTORS = [
     tags: ["Product", "Validation", "MVPs & POCs", "Engineering"]
   },
   {
-    name: "Vane Ibarra",
+    name: "Vane",
     photo: "mentors/vane.png",
     role: "mentor",
     title: "Product Manager, Stori Card",
@@ -424,7 +424,7 @@ const MENTORS = [
     tags: ["Business Strategy", "Finance", "Sales", "Design Thinking", "Social Impact", "Pitching", "Startup Strategy", "Validation", "Community", "Teamwork"]
   },
   {
-    name: "Mafe Nava",
+    name: "Mafe",
     photo: "mentors/mafe.jpg",
     role: "mentor",
     title: "Startup & Innovation Program Manager",
@@ -435,7 +435,7 @@ const MENTORS = [
     tags: ["Startup Strategy", "Business Models", "Validation", "Social Impact", "Pitching"]
   },
   {
-    name: "Chelly (Rachel)",
+    name: "Chelly",
     photo: "mentors/chelly.png",
     role: "mentor",
     title: "Head of Visual Communications · mentor since 2020",
@@ -479,7 +479,7 @@ const MENTORS = [
     tags: ["Product", "Go-to-Market", "Social Media", "Teamwork", "Pitching", "Alum Experience"]
   },
   {
-    name: "Vivaan Dudani",
+    name: "Vivaan",
     photo: "mentors/vivaan.png",
     role: "teen",
     title: "SF 2024 alum · Most Outstanding Company winner",
@@ -523,7 +523,7 @@ const MENTORS = [
     tags: ["Program & Ops", "Logistics", "Student Support"]
   },
   {
-    name: "Dani Cruz",
+    name: "Dani",
     photo: "mentors/dani.jpg",
     role: "staff",
     title: "Leangap Staff · International Trade student",
@@ -712,7 +712,7 @@ function render() {
   grid.className = "grid" + (compact ? " compact" : "");
   grid.innerHTML = "";
   // Mentors first (Eddy closing the group), then teens and staff — alphabetical within each
-  const grp = m => (m.role === "mentor" ? 0 : 2) + (m.name === "Eddy Varela" ? 1 : 0);
+  const grp = m => (m.role === "mentor" ? 0 : 2) + (m.name === "Eddy" ? 1 : 0);
   const visible = MENTORS.filter(matches).sort((a, b) =>
     grp(a) - grp(b) || a.name.localeCompare(b.name));
   visible.forEach(m => {
