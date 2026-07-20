@@ -711,7 +711,9 @@ function render() {
   renderChips();
   grid.className = "grid" + (compact ? " compact" : "");
   grid.innerHTML = "";
-  const visible = MENTORS.filter(matches).sort((a, b) => a.name.localeCompare(b.name));
+  // Mentors first, then teen mentors and staff — alphabetical within each
+  const visible = MENTORS.filter(matches).sort((a, b) =>
+    (a.role === "mentor" ? 0 : 1) - (b.role === "mentor" ? 0 : 1) || a.name.localeCompare(b.name));
   visible.forEach(m => {
     const card = document.createElement("article");
     if (compact) {
