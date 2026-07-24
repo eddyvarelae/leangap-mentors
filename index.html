@@ -266,7 +266,7 @@
 <body>
 
 <header>
-  <a class="header-faq" href="faq.html">🛟 Tech FAQ</a>
+  <a class="header-faq" id="faq-link" href="faq.html?edit" style="display:none">🛟 Tech FAQ</a>
   <div class="header-badge">Summer 2026</div>
   <details class="header-about">
     <summary>
@@ -763,6 +763,8 @@ function render() {
 // Change requests land in Airtable. The token is public by design (base is
 // scoped to write-only on this one table); share ?edit links only with mentors.
 const EDIT_MODE = new URLSearchParams(location.search).has("edit");
+// The Tech FAQ is part of the mentor view, hidden from students
+if (EDIT_MODE) document.getElementById("faq-link").style.display = "";
 const AIRTABLE = {
   token: "PASTE_AIRTABLE_TOKEN",
   baseId: "PASTE_BASE_ID",
