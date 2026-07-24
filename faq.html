@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leangap 2026 — Tech FAQ for Mentors</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f7f7fb;
+    --card: #ffffff;
+    --ink: #1c1c28;
+    --muted: #6b6b7b;
+    --accent: #5b5bd6;
+    --accent-soft: #ecebfd;
+    --border: #e6e6ef;
+    --radius: 16px;
+    --shadow: 0 1px 3px rgba(28,28,40,.06), 0 8px 24px rgba(28,28,40,.07);
+    --say: #047857;
+    --say-soft: #e0f4ea;
+    --pin: #b45309;
+    --pin-soft: #fff4e0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+
+  header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%);
+    color: #fff;
+    padding: 16px 20px 48px;
+    text-align: center;
+    position: relative;
+  }
+  .header-logo {
+    width: 100px; max-width: 30vw; display: block; margin: 0 auto;
+    filter: brightness(0) invert(1); /* wordmark ships dark; render white on the gradient */
+  }
+  .header-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 2px 9px; font-size: .6rem; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .header-back {
+    position: absolute; top: 10px; left: 10px;
+    color: #fff; text-decoration: none; font-size: .78rem; font-weight: 600;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 2px 10px;
+  }
+  .header-back:hover { background: rgba(255,255,255,.3); }
+  header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; margin-top: 10px; }
+  header p { max-width: 620px; margin: 8px auto 0; font-size: .92rem; opacity: .92; }
+  @media (max-width: 560px) { header { padding-top: 40px; } }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 70px; }
+
+  /* The playbook card overlaps the header, like the controls bar on the roster */
+  .playbook {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    margin-top: -36px; position: relative; z-index: 2;
+    padding: 20px 22px;
+  }
+  .playbook h2 { font-size: 1.02rem; margin-bottom: 10px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .step {
+    background: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: .85rem;
+    border: 1px solid var(--border);
+  }
+  .step b { display: block; font-size: .8rem; color: var(--accent); margin-bottom: 3px; }
+  .playbook .fine { font-size: .82rem; color: var(--muted); margin-top: 12px; }
+
+  .searchbar { margin: 22px 0 6px; }
+  #faq-search {
+    width: 100%; padding: 10px 16px; font-size: .95rem;
+    border: 1.5px solid var(--border); border-radius: 12px; outline: none;
+    background: var(--card); transition: border-color .15s;
+  }
+  #faq-search:focus { border-color: var(--accent); }
+  .no-results { display: none; text-align: center; color: var(--muted); padding: 40px 0; }
+
+  .section { margin-top: 30px; }
+  .section > h2 { font-size: 1.2rem; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .section > .section-sub { font-size: .88rem; color: var(--muted); margin-bottom: 14px; }
+
+  details.qa {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    margin-bottom: 12px; overflow: hidden;
+  }
+  details.qa summary {
+    cursor: pointer; list-style: none; padding: 15px 20px;
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 600; font-size: .98rem;
+    -webkit-user-select: none; user-select: none;
+  }
+  details.qa summary::-webkit-details-marker { display: none; }
+  details.qa summary::after { content: "▾"; margin-left: auto; color: var(--muted); font-size: .85rem; }
+  details.qa[open] summary::after { content: "▴"; }
+  details.qa[open] summary { border-bottom: 1px solid var(--border); }
+  .qa-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .qa-body p { font-size: .92rem; }
+  .qa-body .label {
+    font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 4px;
+  }
+
+  .say { background: var(--say-soft); border-radius: 12px; padding: 12px 16px; }
+  .say .label { color: var(--say); }
+  .say p { font-style: italic; }
+  .pin { background: var(--pin-soft); border-radius: 12px; padding: 12px 16px; }
+  .pin .label { color: var(--pin); }
+
+  .refer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .refer .label { margin-bottom: 0; }
+  .mentor-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent-soft); color: var(--accent); text-decoration: none;
+    font-size: .82rem; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+    transition: all .13s;
+  }
+  .mentor-chip:hover { background: var(--accent); color: #fff; }
+  .mentor-chip small { font-weight: 500; opacity: .8; }
+
+  /* Glossary */
+  .gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .gloss .term {
+    background: var(--card); border-radius: 12px; box-shadow: var(--shadow);
+    padding: 12px 15px; font-size: .86rem;
+  }
+  .gloss .term b { color: var(--accent); }
+
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 40px 24px; }
+  footer a { color: var(--accent); }
+
+  @media print {
+    header, .searchbar, footer { display: none; }
+    details.qa { box-shadow: none; border: 1px solid var(--border); break-inside: avoid; }
+    details.qa summary::after { display: none; }
+    .playbook { margin-top: 0; box-shadow: none; border: 1px solid var(--border); }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="header-back" href="index.html">← Mentors</a>
+  <div class="header-badge">Summer 2026</div>
+  <img class="header-logo" src="leangap-logo.svg" alt="Leangap">
+  <h1>Tech FAQ for Non-Tech Mentors</h1>
+  <p>When a business conversation suddenly turns technical, you don't need to change the subject. Give a confident 20-second answer, put a pin in the tech, and bring the focus back to what you're actually helping with.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="playbook">
+    <h2>🎯 The play, every time</h2>
+    <div class="steps">
+      <div class="step"><b>1 · Answer briefly</b>Use the "You can say" script — enough for them to relax.</div>
+      <div class="step"><b>2 · Put a pin in it</b>"Great question — write it down so it doesn't get lost."</div>
+      <div class="step"><b>3 · Refer</b>Point them to the right mentor for that topic (chips below).</div>
+      <div class="step"><b>4 · Return</b>Steer back to the business question you were exploring.</div>
+    </div>
+    <p class="fine">You're not pretending to be a developer — you're keeping the conversation moving. "I know roughly how that works, and Luis can walk you through the details later. Now, back to your pricing…"</p>
+  </div>
+
+  <div class="searchbar">
+    <input id="faq-search" type="search" placeholder="Search questions… (stripe, token, database, chatbot…)" aria-label="Search FAQ">
+  </div>
+  <div class="no-results" id="no-results">Nothing matches — try another word, or check the jargon decoder at the bottom.</div>
+
+  <!-- ============ PAYMENTS ============ -->
+  <section class="section" data-section>
+    <h2>💳 Payments &amp; Stripe</h2>
+    <p class="section-sub">Comes up whenever you ask "how are you charging customers?"</p>
+
+    <details class="qa">
+      <summary>"How do we set up Stripe?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Stripe is the cash register of the internet — it charges cards and moves the money to a bank account. Setting it up means creating an account, verifying an identity, and connecting it to their site. One thing <em>you</em> should know that they might not: Stripe accounts require someone 18+, so a parent, guardian, or the program usually has to be involved.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"Stripe is basically your online cash register — you make an account, verify who you are, and plug it into your site. Heads up: you need an adult on the account. The setup itself is a solved problem, a tech mentor can do it with you in one sitting."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Vane">Vane <small>· fintech &amp; payments</small></a>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· MVPs &amp; roadblocks</small></a>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· engineering</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Before the register matters, what goes in it — what's the price, and is it one-time or a subscription?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Where do I get my token / API key?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>A token (or API key) is a long password that proves their website is allowed to use their Stripe account. It lives in the Stripe Dashboard under <strong>Developers → API keys</strong>. There are two: a <em>publishable</em> key (fine to be visible) and a <em>secret</em> key (never share it, never paste it in a group chat).</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"A token is like the key to your cash register — it proves your site is allowed to charge through your Stripe account. It's in your Stripe dashboard under Developers → API keys. Keep the secret one private."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Luis">Luis <small>· web apps</small></a>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· engineering</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Pin it for Luis — he'll show you where it goes. Meanwhile: how much are we charging, and would your first customer actually pay it?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Do we have to code the payment part?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>No! Stripe has <strong>Payment Links</strong>: they click a button in the dashboard, get a checkout link, and can put it behind any "Buy" button — zero code. For a first version that's usually the right move, and it's a genuinely great answer for you to have in your pocket.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"You don't have to. Stripe has Payment Links — you create a link in the dashboard and put it behind your Buy button, no code at all. Perfect for your first sales."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· MVPs &amp; roadblocks</small></a>
+          <a class="mentor-chip" href="index.html?q=Vane">Vane <small>· fintech &amp; payments</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"So the tech is a link away — the real question is who clicks it. Who's your first paying customer?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Why isn't the charge real? / What's test mode?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Stripe has a practice mode. In test mode, everything looks real but no money moves, and there's a fake card number (4242 4242 4242 4242) for trying checkouts. Flipping to live mode is a switch in the dashboard once the account is verified.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"That's test mode — a sandbox where you rehearse the checkout with a fake card before real money moves. It's a feature, not a bug: demo the fake checkout to a real customer and watch their reaction."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Luis">Luis <small>· web apps</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Actually, this is validation gold — put the test checkout in front of five people and see who gets their card out."</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ LOGINS ============ -->
+  <section class="section" data-section>
+    <h2>🔐 Logins &amp; Google OAuth</h2>
+    <p class="section-sub">Comes up when you ask about users, accounts, or retention.</p>
+
+    <details class="qa">
+      <summary>"How do we implement Google OAuth / Sign in with Google?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>OAuth is "let Google vouch for you." Instead of the startup storing usernames and passwords (risky, lots of work), the user clicks "Sign in with Google" and Google confirms who they are. Setting it up means registering the app on Google's developer console and copying two codes into the site. Fiddly, but standard.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"OAuth just means Google vouches for your user so you never have to store passwords — safer for you and easier for them. You register your app with Google, they give you a couple of codes, and you wire up the button. It's fiddly the first time but it's a well-worn path."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· technical architecture</small></a>
+          <a class="mentor-chip" href="index.html?q=Luis">Luis <small>· frontend &amp; web apps</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Pin the wiring for Oliy. Bigger question first: why do users need an account — what do they get once they're signed in?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"What's a client ID and client secret?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>When they register their app with Google, Google hands back two codes: the <em>client ID</em> (public — like the app's name tag) and the <em>client secret</em> (private — like the app's password). Same pattern as Stripe's publishable vs. secret keys. The kids paste these into their code or settings.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"Those are the two codes Google gives your app when you register it — an ID that's public, like a name tag, and a secret that's private, like a password. You get them from Google's developer console."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Luis">Luis <small>· web apps</small></a>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· engineering</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"That's a 10-minute job with a tech mentor. Let's get back to what a signed-in user is worth to you."</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Do we even need login for our MVP?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Often, no — and this one is <em>your</em> home turf. Login is a week of engineering that delays learning whether anyone wants the product. A landing page, a form, a waitlist, or a manual concierge version usually validates faster. If they're building accounts before they have users, that's a strategy conversation, not a tech one.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"Maybe you don't yet! Login is a lot of effort that teaches you nothing about whether people want this. Could version one work with just a form and an email?"</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· validation &amp; MVPs</small></a>
+          <a class="mentor-chip" href="index.html?q=Kaeya">Kaeya <small>· why this, why now</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>This one doesn't need a pin — it IS the business conversation. Keep going.</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ DATABASES ============ -->
+  <section class="section" data-section>
+    <h2>🗄️ Databases</h2>
+    <p class="section-sub">Comes up when you ask "how many users do you have?" or "what do you know about your customers?"</p>
+
+    <details class="qa">
+      <summary>"What's my database? / Do we have one?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>A database is the app's memory — a giant organized spreadsheet where it saves users, orders, and messages so they're still there tomorrow. If the team uses tools like Firebase, Supabase, Airtable, or a website builder with accounts, they already <em>have</em> a database; it came with the tool.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"Your database is just your app's memory — a big structured spreadsheet where it keeps users and orders. If you're using something like Firebase or Supabase, that IS your database. You probably already have one without realizing."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· technical architecture</small></a>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· product building</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Whatever it's called, it's where your customer data lives — which brings me back to my question: what do you actually know about your users?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Which database should we choose? SQL or NoSQL?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>A classic rabbit hole. At their size, the honest answer is: it barely matters. Any mainstream option works, switching later is very possible, and the popular beginner-friendly ones (Supabase, Firebase) are fine defaults. Debating SQL vs. NoSQL before having users is procrastination wearing a technical costume.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"At your stage any popular one is fine, and you can switch later — teams do it all the time. Pick whatever your tech mentor recommends in five minutes and don't look back. The choice won't make or break the company; finding customers will."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· scaling &amp; architecture</small></a>
+          <a class="mentor-chip" href="index.html?q=Luis">Luis <small>· web apps</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Five-minute decision with Oliy, done. Now — the thing that IS worth debating: who's the customer this data describes?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Where does our data live? Can we lose it?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Their data sits on the provider's cloud servers (Google's, Amazon's, Supabase's…), not on anyone's laptop — and those providers handle backups far better than any startup could. The realistic risks are mundane: losing the account password, or an accidental "delete all" while testing.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"It lives in the cloud with the provider, and they're better at backups than any of us. Just make sure more than one teammate can access the account, and be careful with delete buttons while testing."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· technical roadblocks</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Your data's safe. Are your customers' expectations safe too? If you collect emails, what did you promise to do with them?"</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ AI CHATBOTS ============ -->
+  <section class="section" data-section>
+    <h2>🤖 AI Chatbots</h2>
+    <p class="section-sub">Comes up in support, onboarding, and "we'll add AI" conversations.</p>
+
+    <details class="qa">
+      <summary>"How do we set up an AI chatbot?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Nobody builds the AI brain — they rent it. Companies like Anthropic and OpenAI sell access to their models through an API. A "chatbot" is three parts: a chat window on the site, written instructions telling the AI how to behave, and the rented brain answering. The hard part isn't the wiring — it's writing instructions that make it useful.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"You don't build the AI — you rent it from companies like Anthropic or OpenAI. Your chatbot is really just a chat window plus written instructions plus their AI answering. Wiring it up is a known recipe; the craft is in the instructions."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· engineering</small></a>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· MVPs &amp; POCs</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Pin the wiring. First: what should the bot accomplish — deflect support tickets, qualify leads, onboard users? That decides everything else."</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Which AI model should we use?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Another rabbit hole with a short answer: any major provider is fine to start, and swapping later is easy — it's designed to be. The instructions they write (the "prompt") affect quality far more than which brand of model sits behind it.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"Any of the big ones is fine to start, and switching later is easy. What you write in the instructions matters way more than which model you pick. Don't let this decision block you for even a day."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· product decisions</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Model picked, moving on — what would make a customer say the bot actually helped them?"</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"Why does the AI cost money? What are tokens?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>Careful — "token" here is a <em>different word</em> than the Stripe/login kind! AI tokens are little pieces of words; providers bill per token, like a utility meter running while the AI reads and writes. Costs at prototype scale are usually pocket change, but a popular free chatbot can quietly become a real bill — which is a genuinely interesting business-model problem.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"AI providers charge per 'token' — chunks of words, like a water meter for text. Testing costs cents. But note it's a cost that grows with usage, which is exactly why we need to talk about pricing."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Eddy">Eddy <small>· validating with data</small></a>
+          <a class="mentor-chip" href="index.html?q=Kenza">Kenza <small>· financial planning</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"So every chat costs you something — does every chat earn you something? Let's look at your unit economics."</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="qa">
+      <summary>"How will the bot know about OUR product?"</summary>
+      <div class="qa-body">
+        <div>
+          <div class="label">What's going on</div>
+          <p>The rented AI knows the world in general, not their startup. The simple fix: paste their FAQ, product details, and policies into the bot's instructions so it answers from <em>their</em> material. Fancier versions feed it documents automatically, but paste-it-in works great at this stage.</p>
+        </div>
+        <div class="say">
+          <div class="label">You can say</div>
+          <p>"Out of the box it knows everything except your company. You fix that by feeding your FAQ and product info into its instructions — literally pasting it in works at your stage. Which means someone has to write that FAQ… and that's a business task, not a coding one."</p>
+        </div>
+        <div class="refer">
+          <span class="label">Send them to:</span>
+          <a class="mentor-chip" href="index.html?q=Oliy">Oliy <small>· engineering</small></a>
+          <a class="mentor-chip" href="index.html?q=Marianna">Marianna <small>· copy that lands</small></a>
+        </div>
+        <div class="pin">
+          <div class="label">Back to business</div>
+          <p>"Writing what the bot should say = writing what your company says. Great excuse to nail your messaging — let's draft it."</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ GLOSSARY ============ -->
+  <section class="section" data-section>
+    <h2>📖 Jargon decoder</h2>
+    <p class="section-sub">One-liners for words that fly across the table. Enough to nod and keep the meeting on track.</p>
+    <div class="gloss">
+      <div class="term"><b>API</b> — how two apps talk to each other. "We use the Stripe API" = our site talks to Stripe.</div>
+      <div class="term"><b>API key / token</b> — a long password proving an app is allowed to use a service. Secret ones stay secret.</div>
+      <div class="term"><b>AI token</b> — different thing! A word-piece the AI provider bills for, like a utility meter.</div>
+      <div class="term"><b>Frontend</b> — the part of the app users see and click.</div>
+      <div class="term"><b>Backend</b> — the behind-the-scenes part: logic, data, payments.</div>
+      <div class="term"><b>Database</b> — the app's memory; a big structured spreadsheet that survives restarts.</div>
+      <div class="term"><b>Deploy</b> — publish the latest version to the internet. "It works locally" = not deployed yet.</div>
+      <div class="term"><b>Localhost</b> — the app running only on their own laptop. No one else can see it.</div>
+      <div class="term"><b>Domain</b> — the address people type, like <em>mystartup.com</em>. Rented yearly, ~$10–15.</div>
+      <div class="term"><b>Webhook</b> — one service automatically pinging another when something happens ("payment succeeded → send receipt").</div>
+      <div class="term"><b>.env file</b> — where secret keys live so they don't end up in shared code.</div>
+      <div class="term"><b>Framework</b> — pre-built scaffolding developers build on (React, Next.js…). Brand names, not magic.</div>
+      <div class="term"><b>Prompt</b> — the written instructions given to an AI. Where most of the quality comes from.</div>
+      <div class="term"><b>No-code</b> — building with visual tools instead of programming. Legitimate, fast, great for MVPs.</div>
+    </div>
+  </section>
+
+  <footer>
+    Made with 💜 for the Leangap 2026 mentors · <a href="index.html">Back to the mentor roster</a>
+  </footer>
+</div>
+
+<script>
+// Live filter: matches question + answer text; auto-opens hits so mentors
+// can graze, restores the browsing state when the search is cleared.
+const search = document.getElementById("faq-search");
+const items = [...document.querySelectorAll("details.qa")];
+const sections = [...document.querySelectorAll("[data-section]")];
+const noResults = document.getElementById("no-results");
+
+search.addEventListener("input", () => {
+  const q = search.value.trim().toLowerCase();
+  let anyHit = false;
+  items.forEach(d => {
+    const hit = !q || d.textContent.toLowerCase().includes(q);
+    d.style.display = hit ? "" : "none";
+    d.open = Boolean(q) && hit;
+    if (hit) anyHit = true;
+  });
+  sections.forEach(s => {
+    const terms = [...s.querySelectorAll(".term")];
+    if (terms.length) {
+      let sectionHit = false;
+      terms.forEach(t => {
+        const hit = !q || t.textContent.toLowerCase().includes(q);
+        t.style.display = hit ? "" : "none";
+        if (hit) sectionHit = true;
+      });
+      s.style.display = sectionHit ? "" : "none";
+      if (sectionHit) anyHit = true;
+    } else {
+      const visible = [...s.querySelectorAll("details.qa")].some(d => d.style.display !== "none");
+      s.style.display = visible ? "" : "none";
+    }
+  });
+  noResults.style.display = anyHit ? "none" : "block";
+});
+</script>
+</body>
+</html>

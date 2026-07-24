@@ -44,6 +44,13 @@
     border-radius: 999px; padding: 2px 9px; font-size: .6rem; font-weight: 600;
     letter-spacing: .06em; text-transform: uppercase;
   }
+  .header-faq {
+    position: absolute; top: 10px; left: 10px;
+    color: #fff; text-decoration: none; font-size: .68rem; font-weight: 600;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 999px; padding: 2px 10px;
+  }
+  .header-faq:hover { background: rgba(255,255,255,.3); }
   .header-about { margin: 0 auto; }
   .header-about summary {
     cursor: pointer; list-style: none;
@@ -259,6 +266,7 @@
 <body>
 
 <header>
+  <a class="header-faq" href="faq.html">🛟 Tech FAQ</a>
   <div class="header-badge">Summer 2026</div>
   <details class="header-about">
     <summary>
@@ -988,6 +996,13 @@ document.getElementById("search").addEventListener("input", e => {
   query = e.target.value.trim();
   render();
 });
+
+// ?q= deep links (used by the Tech FAQ's "send them to" chips)
+const initialQ = new URLSearchParams(location.search).get("q");
+if (initialQ) {
+  document.getElementById("search").value = initialQ;
+  query = initialQ.trim();
+}
 
 const viewToggle = document.getElementById("view-toggle");
 viewToggle.onclick = () => {
